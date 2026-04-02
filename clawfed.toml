@@ -1,0 +1,14 @@
+agent_id = "my_agent"
+
+[security]
+trusted_agents = ["coordinator"]
+use_sm_crypto = false
+
+[compliance]
+enabled = true
+country = "CN"
+
+[features]
+enable_skills = true
+enable_fl = false
+fl_max_upload_mb = 10

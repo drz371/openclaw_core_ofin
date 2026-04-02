@@ -1,0 +1,257 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenClaw 24-Hour Stability Test Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+        }
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .summary-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .summary-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .summary-card .value {
+            font-size: 32px;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .success {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .error {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .warning {
+            color: #f39c12;
+            font-weight: bold;
+        }
+        .info {
+            color: #3498db;
+            font-weight: bold;
+        }
+        .log-entry {
+            font-family: monospace;
+            background-color: #f8f9fa;
+            padding: 10px;
+            margin: 5px 0;
+            border-left: 3px solid #3498db;
+        }
+        .error-log {
+            color: #e74c3c;
+            border-left-color: #e74c3c;
+        }
+        .timestamp {
+            color: #7f8c8d;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>OpenClaw 24-Hour Stability Test Report</h1>
+        
+        <h2>Test Summary</h2>
+        <div class="summary">
+            <div class="summary-card">
+                <h3>Duration</h3>
+                <div class="value"></div>
+            </div>
+            <div class="summary-card">
+                <h3>Total Iterations</h3>
+                <div class="value">1231</div>
+            </div>
+            <div class="summary-card">
+                <h3>Success Rate</h3>
+                <div class="value">100%</div>
+            </div>
+            <div class="summary-card">
+                <h3>Operations/Hour</h3>
+                <div class="value">0</div>
+            </div>
+        </div>
+        
+        <h2>Test Details</h2>
+        <table>
+            <tr>
+                <th>Metric</th>
+                <th>Value</th>
+            </tr>
+            <tr>
+                <td>Start Time</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>End Time</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Total Duration</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Skill Calls</td>
+                <td class="info">416</td>
+            </tr>
+            <tr>
+                <td>FL Uploads</td>
+                <td class="info">394</td>
+            </tr>
+            <tr>
+                <td>Compliance Checks</td>
+                <td class="info">421</td>
+            </tr>
+            <tr>
+                <td>Errors</td>
+                <td class="error">0</td>
+            </tr>
+            <tr>
+                <td>Success Rate</td>
+                <td class="success">100%</td>
+            </tr>
+        </table>        <h2>Skill Call Latency Statistics</h2>
+        <table>
+            <tr>
+                <th>Metric</th>
+                <th>Value (ms)</th>
+            </tr>
+            <tr>
+                <td>Average</td>
+                <td>54.09</td>
+            </tr>
+            <tr>
+                <td>Minimum</td>
+                <td>10</td>
+            </tr>
+            <tr>
+                <td>Maximum</td>
+                <td>99</td>
+            </tr>
+            <tr>
+                <td>Median</td>
+                <td>54</td>
+            </tr>
+            <tr>
+                <td>P95</td>
+                <td>96</td>
+            </tr>
+            <tr>
+                <td>P99</td>
+                <td>99</td>
+            </tr>
+            <tr>
+                <td>Total Calls</td>
+                <td>416</td>
+            </tr>
+        </table>        <h2>FL Upload Latency Statistics</h2>
+        <table>
+            <tr>
+                <th>Metric</th>
+                <th>Value (ms)</th>
+            </tr>
+            <tr>
+                <td>Average</td>
+                <td>125.35</td>
+            </tr>
+            <tr>
+                <td>Minimum</td>
+                <td>50</td>
+            </tr>
+            <tr>
+                <td>Maximum</td>
+                <td>199</td>
+            </tr>
+            <tr>
+                <td>Median</td>
+                <td>126</td>
+            </tr>
+            <tr>
+                <td>P95</td>
+                <td>195</td>
+            </tr>
+            <tr>
+                <td>P99</td>
+                <td>199</td>
+            </tr>
+            <tr>
+                <td>Total Uploads</td>
+                <td>394</td>
+            </tr>
+        </table>        <h2>Compliance Checks by Region</h2>
+        <table>
+            <tr>
+                <th>Region</th>
+                <th>Checks</th>
+            </tr>            <tr>
+                <td>EU</td>
+                <td>103</td>
+            </tr>            <tr>
+                <td>CN</td>
+                <td>116</td>
+            </tr>            <tr>
+                <td>APAC</td>
+                <td>97</td>
+            </tr>            <tr>
+                <td>US</td>
+                <td>105</td>
+            </tr>        </table>        <h2>Test Conclusion</h2>
+        <p>            <span class="success">Excellent:</span> The test completed with a success rate of 100%. 
+            The system demonstrated excellent stability over the 24-hour period.        </p>
+        
+        <p class="timestamp">Report generated: 2026-04-02 08:02:40</p>
+        <p class="timestamp">Log file: C:\Users\one\Documents\trae_projects\open claw_core_ofin\logs\stability_test\stability_test_20260331_224858.log</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,120 @@
+version: '3.8'
+
+services:
+  coordinator:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: clawfed-coordinator
+    command: server --addr "[::1]:50051" --agent-id coordinator
+    ports:
+      - "50051:50051"
+    volumes:
+      - ./config:/var/lib/clawfed/config
+      - ./logs:/var/log/clawfed
+    environment:
+      - RUST_LOG=info
+      - RUST_BACKTRACE=1
+    networks:
+      - clawfed-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "timeout", "3s", "bash", "-c", "cat < /dev/null/tcp/localhost/50051 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+  vision-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: clawfed-vision-agent
+    command: agent --server --addr "[::1]:50052"
+    ports:
+      - "50052:50052"
+    depends_on:
+      coordinator:
+        condition: service_healthy
+    environment:
+      - RUST_LOG=info
+      - COORDINATOR_ADDR=http://coordinator:50051
+    networks:
+      - clawfed-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+  nlp-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: clawfed-nlp-agent
+    command: agent --server --addr "[::1]:50053"
+    ports:
+      - "50053:50053"
+    depends_on:
+      coordinator:
+        condition: service_healthy
+    environment:
+      - RUST_LOG=info
+      - COORDINATOR_ADDR=http://coordinator:50051
+    networks:
+      - clawfed-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+  robot-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: clawfed-robot-agent
+    command: agent --server --addr "[::1]:50054"
+    ports:
+      - "50054:50054"
+    depends_on:
+      coordinator:
+        condition: service_healthy
+    environment:
+      - RUST_LOG=info
+      - COORDINATOR_ADDR=http://coordinator:50051
+    networks:
+      - clawfed-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+networks:
+  clawfed-network:
+    driver: bridge
+
+volumes:
+  config:
+  logs:

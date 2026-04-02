@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package clawfed;
+
+option go_package = "./clawfed";
+
+message AgentInfo {
+  string agent_id = 1;
+  string address = 2;
+  int32 port = 3;
+  repeated string skills = 4;
+  map<string, string> metadata = 5;
+}
+
+message SkillRequest {
+  string agent_id = 1;
+  string skill_name = 2;
+  string args_json = 3;
+  string request_id = 4;
+}
+
+message SkillResponse {
+  bool success = 1;
+  string result_json = 2;
+  string error_message = 3;
+  string request_id = 4;
+}
+
+message RegisterRequest {
+  AgentInfo agent_info = 1;
+}
+
+message RegisterResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message DiscoverRequest {
+  string skill_name = 1;
+}
+
+message DiscoverResponse {
+  repeated AgentInfo agents = 1;
+}
+
+message FlDeltaUpload {
+  string agent_id = 1;
+  string task_id = 2;
+  bytes delta_data = 3;
+  int64 size_bytes = 4;
+  string format = 5;
+}
+
+message FlUploadResponse {
+  bool success = 1;
+  string message = 2;
+  string delta_id = 3;
+}
+
+message FlTaskInfo {
+  string task_id = 1;
+  string task_name = 2;
+  string status = 3;
+  int64 total_deltas = 4;
+  int64 required_deltas = 5;
+}
+
+message FlTaskListResponse {
+  repeated FlTaskInfo tasks = 1;
+}
+
+service AgentService {
+  rpc CallSkill(SkillRequest) returns (SkillResponse);
+  rpc RegisterAgent(RegisterRequest) returns (RegisterResponse);
+  rpc DiscoverAgents(DiscoverRequest) returns (DiscoverResponse);
+}
+
+service FlCoordinator {
+  rpc UploadDelta(FlDeltaUpload) returns (FlUploadResponse);
+  rpc ListTasks(DiscoverRequest) returns (FlTaskListResponse);
+}

@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: clawfed-test-runner
+    volumes:
+      - ./target:/app/target
+      - ./test-results:/app/test-results
+    environment:
+      - RUST_LOG=info
+      - RUST_BACKTRACE=1
+    networks:
+      - test-network
+    command: cargo test -- --test-threads=1 --nocapture
+
+networks:
+  test-network:
+    driver: bridge
+
+volumes:
+  test-results:
