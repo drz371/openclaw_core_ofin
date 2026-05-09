@@ -173,11 +173,12 @@ impl Cli {
             country: "CN".to_string(),
         });
 
-        let agent_manager = AgentManager::new(agent, Arc::try_unwrap(registry.clone()).unwrap_or_else(|_arc| {
-            panic!("Failed to unwrap Arc for AgentManager")
-        }), compliance);
-
         if server {
+            registry.register(agent.to_agent_info()).await
+                .map_err(|e| anyhow::anyhow!("Failed to register agent: {}", e))?;
+
+            let _agent_manager = AgentManager::new(agent, AgentRegistry::new(), compliance);
+
             println!("✓ Agent starting in server mode on {}", addr);
             println!("  Agent ID: {}", agent_id);
             println!("  Press Ctrl+C to stop");
