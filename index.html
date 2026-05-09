@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>勇者日志 | 个人博客与冒险</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+SC:wght@300;400;700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div id="particle-canvas"></div>
+  
+  <nav class="main-nav">
+    <div class="nav-logo">
+      <span class="logo-text">勇者日志</span>
+      <span class="logo-sub">HERO'S LOG</span>
+    </div>
+    <ul class="nav-links">
+      <li class="nav-item active" data-page="blog">博客</li>
+      <li class="nav-item" data-page="game">冒险</li>
+      <li class="nav-item" data-page="about">关于</li>
+    </ul>
+    <div class="nav-indicator"></div>
+  </nav>
+
+  <main class="main-content">
+    <section id="blog-page" class="page active">
+      <div class="blog-container">
+        <div class="blog-sidebar">
+          <div class="profile-card">
+            <div class="profile-image">
+              <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="profileGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#ff006e;stop-opacity:0.8"/>
+                    <stop offset="100%" style="stop-color:#00d4ff;stop-opacity:0.8"/>
+                  </linearGradient>
+                </defs>
+                <circle cx="100" cy="100" r="80" fill="url(#profileGrad)"/>
+                <text x="100" y="115" text-anchor="middle" fill="white" font-size="60" font-family="Bebas Neue">V</text>
+              </svg>
+            </div>
+            <h2 class="profile-name">虚空旅者</h2>
+            <p class="profile-bio">代码与剑的交织者 | 在数字世界寻找像素与魔法的边界</p>
+            <div class="profile-stats">
+              <div class="stat">
+                <span class="stat-num">42</span>
+                <span class="stat-label">文章</span>
+              </div>
+              <div class="stat">
+                <span class="stat-num">128</span>
+                <span class="stat-label">冒险</span>
+              </div>
+              <div class="stat">
+                <span class="stat-num">Lv.99</span>
+                <span class="stat-label">等级</span>
+              </div>
+            </div>
+            <div class="profile-socials">
+              <a href="#" class="social-link">GitHub</a>
+              <a href="#" class="social-link">Twitter</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="blog-main">
+          <div class="blog-header">
+            <h1 class="page-title">
+              <span class="title-main">文字与代码</span>
+              <span class="title-sub">WORDS & CODE</span>
+            </h1>
+            <div class="blog-controls">
+              <div class="search-box">
+                <input type="text" id="searchInput" placeholder="搜索冒险记录...">
+                <svg class="search-icon" viewBox="0 0 24 24" width="20" height="20">
+                  <path fill="none" stroke="#00d4ff" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+              </div>
+              <div class="category-filters">
+                <button class="filter-btn active" data-category="all">全部</button>
+                <button class="filter-btn" data-category="tech">技术</button>
+                <button class="filter-btn" data-category="game">游戏</button>
+                <button class="filter-btn" data-category="design">设计</button>
+                <button class="filter-btn" data-category="life">生活</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="posts-grid" id="postsGrid">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="game-page" class="page">
+      <div class="game-container">
+        <div class="game-header">
+          <h1 class="page-title">
+            <span class="title-main">勇者斗恶龙</span>
+            <span class="title-sub">DRAGON QUEST</span>
+          </h1>
+        </div>
+
+        <div class="game-layout">
+          <div class="game-panel character-panel">
+            <h3 class="panel-title">勇者状态</h3>
+            <div class="character-info">
+              <div class="char-name">
+                <span class="label">勇者</span>
+                <span class="level" id="playerLevel">Lv.1</span>
+              </div>
+              <div class="char-stats">
+                <div class="stat-bar">
+                  <div class="stat-label-row">
+                    <span>HP</span>
+                    <span id="playerHp">50/50</span>
+                  </div>
+                  <div class="bar-container">
+                    <div class="bar-fill hp-fill" id="playerHpBar" style="width: 100%"></div>
+                  </div>
+                </div>
+                <div class="stat-bar">
+                  <div class="stat-label-row">
+                    <span>MP</span>
+                    <span id="playerMp">20/20</span>
+                  </div>
+                  <div class="bar-container">
+                    <div class="bar-fill mp-fill" id="playerMpBar" style="width: 100%"></div>
+                  </div>
+                </div>
+                <div class="stat-bar">
+                  <div class="stat-label-row">
+                    <span>EXP</span>
+                    <span id="playerExp">0/50</span>
+                  </div>
+                  <div class="bar-container">
+                    <div class="bar-fill exp-fill" id="playerExpBar" style="width: 0%"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="char-attributes">
+                <div class="attr"><span>攻击</span><span id="playerAtk">12</span></div>
+                <div class="attr"><span>防御</span><span id="playerDef">8</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="game-canvas-wrapper">
+            <canvas id="gameCanvas"></canvas>
+            <div class="game-overlay" id="gameOverlay">
+              <div class="overlay-content">
+                <h2 id="overlayTitle">冒险开始</h2>
+                <p id="overlayMessage">选择你的行动</p>
+                <button class="btn-primary" id="startGameBtn">开始冒险</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="game-panel battle-panel">
+            <h3 class="panel-title">战斗指令</h3>
+            <div class="battle-actions" id="battleActions">
+              <button class="action-btn attack" data-action="attack">
+                <span class="action-icon">⚔️</span>
+                <span class="action-text">攻击</span>
+              </button>
+              <button class="action-btn magic" data-action="magic">
+                <span class="action-icon">🔥</span>
+                <span class="action-text">火焰 (5MP)</span>
+              </button>
+              <button class="action-btn heal" data-action="heal">
+                <span class="action-icon">✨</span>
+                <span class="action-text">治疗 (8MP)</span>
+              </button>
+              <button class="action-btn defend" data-action="defend">
+                <span class="action-icon">🛡️</span>
+                <span class="action-text">防御</span>
+              </button>
+              <button class="action-btn item" data-action="item">
+                <span class="action-icon">🧪</span>
+                <span class="action-text">药水 x<span id="potionCount">3</span></span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="battle-log" id="battleLog">
+          <div class="log-header">战斗记录</div>
+          <div class="log-content" id="logContent"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="about-page" class="page">
+      <div class="about-container">
+        <div class="about-header">
+          <h1 class="page-title">
+            <span class="title-main">关于我</span>
+            <span class="title-sub">ABOUT ME</span>
+          </h1>
+        </div>
+
+        <div class="about-content">
+          <div class="about-card">
+            <div class="about-avatar">
+              <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="avatarGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#ff006e;stop-opacity:0.9"/>
+                    <stop offset="50%" style="stop-color:#7b2ff7;stop-opacity:0.9"/>
+                    <stop offset="100%" style="stop-color:#00d4ff;stop-opacity:0.9"/>
+                  </linearGradient>
+                  <filter id="glow">
+                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                    <feMerge>
+                      <feMergeNode in="coloredBlur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                </defs>
+                <circle cx="150" cy="150" r="120" fill="url(#avatarGrad)" filter="url(#glow)"/>
+                <text x="150" y="175" text-anchor="middle" fill="white" font-size="80" font-family="Bebas Neue">V</text>
+              </svg>
+            </div>
+            <h2 class="about-name">虚空旅者</h2>
+            <p class="about-title">全栈开发者 / 像素艺术家 / 业余冒险家</p>
+            <p class="about-desc">
+              在代码的世界里寻找魔法的痕迹。白天写JavaScript，夜晚在RPG游戏中拯救世界。
+              相信好的设计就像好的装备，能让冒险事半功倍。
+            </p>
+          </div>
+
+          <div class="skills-section">
+            <h3 class="section-title">技能树</h3>
+            <div class="skills-grid">
+              <div class="skill-item">
+                <div class="skill-icon">⚡</div>
+                <div class="skill-info">
+                  <span class="skill-name">JavaScript</span>
+                  <div class="skill-bar"><div class="skill-fill" style="width: 95%"></div></div>
+                </div>
+              </div>
+              <div class="skill-item">
+                <div class="skill-icon">🎨</div>
+                <div class="skill-info">
+                  <span class="skill-name">CSS/设计</span>
+                  <div class="skill-bar"><div class="skill-fill" style="width: 88%"></div></div>
+                </div>
+              </div>
+              <div class="skill-item">
+                <div class="skill-icon">🐍</div>
+                <div class="skill-info">
+                  <span class="skill-name">Python</span>
+                  <div class="skill-bar"><div class="skill-fill" style="width: 82%"></div></div>
+                </div>
+              </div>
+              <div class="skill-item">
+                <div class="skill-icon">🎮</div>
+                <div class="skill-info">
+                  <span class="skill-name">游戏开发</span>
+                  <div class="skill-bar"><div class="skill-fill" style="width: 75%"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="contact-section">
+            <h3 class="section-title">联系方式</h3>
+            <div class="contact-links">
+              <a href="#" class="contact-link">
+                <span class="contact-icon">📧</span>
+                <span>hero@example.com</span>
+              </a>
+              <a href="#" class="contact-link">
+                <span class="contact-icon">🐙</span>
+                <span>github.com/hero</span>
+              </a>
+              <a href="#" class="contact-link">
+                <span class="contact-icon">🐦</span>
+                <span>@hero_dev</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <svg style="display: none">
+    <defs>
+      <filter id="noise">
+        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" stitchTiles="stitch"/>
+        <feColorMatrix type="saturate" values="0"/>
+      </filter>
+    </defs>
+  </svg>
+
+  <script src="js/game.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
