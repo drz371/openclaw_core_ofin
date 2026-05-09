@@ -3,10 +3,8 @@
 #   OpenClaw × Hermes 多 Agent 一键安装运行脚本
 #   默认启动 OpenClaw 和 Hermes 两个 Agent 进行互联测试
 #   适用系统：Linux / macOS
-#   作者：OpenClaw Team
 # =====================================================
 
-# 颜色定义
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -21,7 +19,6 @@ echo -e "${BLUE}║    让你在 5 分钟内启动多个 AI Agent 并互联协�
 echo -e "${BLUE}╚══════════════════════════════════════════════════════╝${NC}"
 echo ""
 
-# 检查 Rust
 check_rust() {
     echo -e "${BLUE}[1/5] 检查 Rust 环境...${NC}"
     if command -v cargo &> /dev/null; then
@@ -36,7 +33,6 @@ check_rust() {
     fi
 }
 
-# 编译项目
 build_project() {
     echo ""
     echo -e "${BLUE}[2/5] 编译 OpenClaw...${NC}"
@@ -57,7 +53,6 @@ build_project() {
     fi
 }
 
-# 创建测试数据
 create_test_data() {
     echo ""
     echo -e "${BLUE}[3/5] 准备测试数据...${NC}"
@@ -65,32 +60,27 @@ create_test_data() {
     echo -e "${GREEN}✓ 测试数据已创建 (test_delta.lora)${NC}"
 }
 
-# 启动服务
 start_services() {
     echo ""
     echo -e "${BLUE}[4/5] 启动 OpenClaw × Hermes 服务集群...${NC}"
     echo ""
 
-    # 清理之前的进程
     pkill -f "clawfed server" 2>/dev/null || true
     pkill -f "clawfed agent" 2>/dev/null || true
     sleep 1
 
-    # 启动协调器
     echo -e "${YELLOW}  启动协调器（端口 50051）...${NC}"
     ./target/release/clawfed server --addr "0.0.0.0:50051" --agent-id coordinator > /dev/null 2>&1 &
     COORD_PID=$!
     sleep 1
 
-    # 启动 OpenClaw Agent
     echo -e "${CYAN}  启动 OpenClaw Agent（端口 50052）...${NC}"
-    ./target/release/clawfed agent --server --addr "0.0.0.0:50052" > /dev/null 2>&1 &
+    ./target/release/clawfed agent --server --addr "0.0.0.0:50052" --agent-id "agent_01" > /dev/null 2>&1 &
     OPENCLAW_PID=$!
     sleep 1
 
-    # 启动 Hermes Agent
     echo -e "${PURPLE}  启动 Hermes Agent（端口 50053）...${NC}"
-    ./target/release/clawfed agent --server --addr "0.0.0.0:50053" > /dev/null 2>&1 &
+    ./target/release/clawfed agent --server --addr "0.0.0.0:50053" --agent-id "agent_02" > /dev/null 2>&1 &
     HERMES_PID=$!
     sleep 1
 
@@ -98,14 +88,13 @@ start_services() {
     echo -e "${GREEN}✓ 服务集群已启动！${NC}"
 }
 
-# 运行测试
 run_test() {
     echo ""
     echo -e "${BLUE}[5/5] 运行 OpenClaw × Hermes 互联测试...${NC}"
     echo ""
 
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${CYAN}  1. OpenClaw Agent 技能测试${NC}"
+    echo -e "${CYAN}  1. OpenClaw Agent (agent_01) 技能测试${NC}"
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo ""
 
@@ -132,7 +121,7 @@ run_test() {
 
     echo ""
     echo -e "${PURPLE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${PURPLE}  2. Hermes Agent 技能测试${NC}"
+    echo -e "${PURPLE}  2. Hermes Agent (agent_02) 技能测试${NC}"
     echo -e "${PURPLE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo ""
 
@@ -220,7 +209,6 @@ run_test() {
     echo ""
 }
 
-# 清理
 cleanup() {
     echo ""
     echo -e "${BLUE}清理测试进程...${NC}"
@@ -229,7 +217,6 @@ cleanup() {
     echo -e "${GREEN}清理完成${NC}"
 }
 
-# 显示帮助
 show_help() {
     echo ""
     echo -e "${GREEN}╔══════════════════════════════════════════════════════╗${NC}"
@@ -242,14 +229,14 @@ show_help() {
     echo -e "${YELLOW}  Coordinator: http://127.0.0.1:50051${NC}"
     echo ""
     echo -e "${YELLOW}【启动命令】${NC}"
-    echo -e "  ./target/release/clawfed server --addr \"0.0.0.0:50051\""
-    echo -e "  ./target/release/clawfed agent --server --addr \"0.0.0.0:50052\"  # OpenClaw"
-    echo -e "  ./target/release/clawfed agent --server --addr \"0.0.0.0:50053\"  # Hermes"
+    echo -e "  ./target/release/clawfed server --addr \"0.0.0.0:50051\" --agent-id coordinator"
+    echo -e "  ./target/release/clawfed agent --server --addr \"0.0.0.0:50052\" --agent-id \"agent_01\"  # OpenClaw"
+    echo -e "  ./target/release/clawfed agent --server --addr \"0.0.0.0:50053\" --agent-id \"agent_02\"  # Hermes"
     echo ""
-    echo -e "${YELLOW}【OpenClaw 技能】${NC}"
+    echo -e "${YELLOW}【OpenClaw (agent_01) 技能】${NC}"
     echo -e "  detect_objects, summarize_pdf, process_data"
     echo ""
-    echo -e "${YELLOW}【Hermes 技能】${NC}"
+    echo -e "${YELLOW}【Hermes (agent_02) 技能】${NC}"
     echo -e "  analyze_context, generate_response, translate_text"
     echo ""
     echo -e "${YELLOW}【调用示例】${NC}"
@@ -267,30 +254,20 @@ show_help() {
     echo ""
 }
 
-# 主程序
 main() {
     trap cleanup EXIT
 
-    # 检查 Rust
     if ! check_rust; then
         exit 1
     fi
 
-    # 编译
     if ! build_project; then
         exit 1
     fi
 
-    # 创建测试数据
     create_test_data
-
-    # 启动服务
     start_services
-
-    # 运行测试
     run_test
-
-    # 显示帮助
     show_help
 
     echo -e "${GREEN}╔══════════════════════════════════════════════════════╗${NC}"
@@ -298,5 +275,4 @@ main() {
     echo -e "${GREEN}╚══════════════════════════════════════════════════════╝${NC}"
 }
 
-# 执行
 main

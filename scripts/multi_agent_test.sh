@@ -7,7 +7,6 @@
 
 set -e
 
-# 颜色定义
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -23,71 +22,58 @@ echo ""
 
 CLAWFED="./target/release/clawfed"
 
-# 检查可执行文件
 if [ ! -f "$CLAWFED" ]; then
     echo -e "${YELLOW}  未找到可执行文件，正在编译...${NC}"
     cargo build --release
 fi
 
-# 清理函数
 cleanup() {
     echo ""
     echo -e "${YELLOW}停止所有服务...${NC}"
-    pkill -f "clawfed server" || true
-    pkill -f "clawfed agent" || true
+    pkill -f "clawfed server" 2>/dev/null || true
+    pkill -f "clawfed agent" 2>/dev/null || true
     sleep 1
     echo -e "${GREEN}清理完成${NC}"
 }
 
 trap cleanup EXIT
-
-# 清理旧进程
 cleanup
 
-# 创建测试数据
 echo -e "${BLUE}创建测试数据...${NC}"
 echo -ne '\x4C\x6F\x52\x41\x00\x01' > test_delta.lora
 
-# ═══════════════════════════════════════════════════════
-# 启动 OpenClaw Agent（端口 50052）
-# ═══════════════════════════════════════════════════════
 echo ""
 echo -e "${CYAN}═══════════════════════════════════════════════════${NC}"
-echo -e "${CYAN}  启动 OpenClaw Agent${NC}"
+echo -e "${CYAN}  启动 OpenClaw Agent (agent_01)${NC}"
 echo -e "${CYAN}═══════════════════════════════════════════════════${NC}"
 echo ""
 
 echo -e "${BLUE}  [OpenClaw] 启动服务（端口 50052）...${NC}"
-$CLAWFED agent --server --addr "0.0.0.0:50052" > /dev/null 2>&1 &
+$CLAWFED agent --server --addr "0.0.0.0:50052" --agent-id "agent_01" > /dev/null 2>&1 &
 OPENCLAW_PID=$!
 echo -e "${GREEN}  ✓ OpenClaw 已启动 (PID: $OPENCLAW_PID)${NC}"
-echo -e "${GREEN}  ✓ Agent ID: openclaw_agent${NC}"
+echo -e "${GREEN}  ✓ Agent ID: agent_01${NC}"
 echo -e "${GREEN}  ✓ 技能: detect_objects, summarize_pdf, process_data${NC}"
 
-# ═══════════════════════════════════════════════════════
-# 启动 Hermes Agent（端口 50053）
-# ═══════════════════════════════════════════════════════
 echo ""
 echo -e "${PURPLE}═══════════════════════════════════════════════════${NC}"
-echo -e "${PURPLE}  启动 Hermes Agent${NC}"
+echo -e "${PURPLE}  启动 Hermes Agent (agent_02)${NC}"
 echo -e "${PURPLE}═══════════════════════════════════════════════════${NC}"
 echo ""
 
 echo -e "${BLUE}  [Hermes] 启动服务（端口 50053）...${NC}"
-$CLAWFED agent --server --addr "0.0.0.0:50053" > /dev/null 2>&1 &
+$CLAWFED agent --server --addr "0.0.0.0:50053" --agent-id "agent_02" > /dev/null 2>&1 &
 HERMES_PID=$!
 echo -e "${GREEN}  ✓ Hermes 已启动 (PID: $HERMES_PID)${NC}"
-echo -e "${GREEN}  ✓ Agent ID: hermes_agent${NC}"
+echo -e "${GREEN}  ✓ Agent ID: agent_02${NC}"
 echo -e "${GREEN}  ✓ 技能: analyze_context, generate_response, translate_text${NC}"
 
-# 启动协调器（用于联邦学习测试）
 echo ""
 echo -e "${YELLOW}启动协调器（端口 50051）...${NC}"
 $CLAWFED server --addr "0.0.0.0:50051" --agent-id coordinator > /dev/null 2>&1 &
 COORD_PID=$!
 echo -e "${GREEN}✓ 协调器已启动 (PID: $COORD_PID)${NC}"
 
-# 等待服务就绪
 sleep 2
 
 echo ""
@@ -95,10 +81,6 @@ echo -e "${GREEN}╔════════════════════
 echo -e "${GREEN}║   OpenClaw × Hermes 已就绪，开始互联测试！          ║${NC}"
 echo -e "${GREEN}╚════════════════════════════════════════════════════╝${NC}"
 echo ""
-
-# ═══════════════════════════════════════════════════════
-# 测试函数
-# ═══════════════════════════════════════════════════════
 
 test_skill() {
     local agent_id=$1
@@ -124,7 +106,7 @@ cross_agent_test() {
     local skill=$4
     local args=$5
 
-    echo -e "${BLUE}跨 Agent 调用: ${source} -> ${target} (${skill})${NC}"
+    echo -e "${BLUE}跨 Agent 调用: ${source} -> ${target} ($skill)${NC}"
     if $CLAWFED call "$target" "$skill" --addr "http://127.0.0.1:${target_port}" --args "$args" 2>&1 | grep -q "Called skill"; then
         echo -e "${GREEN}  ✓ 跨 Agent 通信成功${NC}"
         return 0
@@ -134,12 +116,8 @@ cross_agent_test() {
     fi
 }
 
-# ═══════════════════════════════════════════════════════
-# 测试开始
-# ═══════════════════════════════════════════════════════
-
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${CYAN}  1. OpenClaw Agent 技能测试${NC}"
+echo -e "${CYAN}  1. OpenClaw Agent (agent_01) 技能测试${NC}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
@@ -149,7 +127,7 @@ test_skill "agent_01" "process_data" '{"dataset": "train.csv"}' "50052" "OpenCla
 
 echo ""
 echo -e "${PURPLE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${PURPLE}  2. Hermes Agent 技能测试${NC}"
+echo -e "${PURPLE}  2. Hermes Agent (agent_02) 技能测试${NC}"
 echo -e "${PURPLE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
@@ -241,7 +219,6 @@ for pid_info in "OpenClaw:$OPENCLAW_PID" "Hermes:$HERMES_PID" "Coordinator:$COOR
     fi
 done
 
-# 最终结果
 echo ""
 echo -e "${GREEN}╔════════════════════════════════════════════════════╗${NC}"
 echo -e "${GREEN}║         OpenClaw × Hermes 协作测试完成！          ║${NC}"
@@ -262,5 +239,4 @@ echo ""
 echo -e "${YELLOW}  按 Ctrl+C 停止所有服务${NC}"
 echo ""
 
-# 保持运行直到用户中断
 wait

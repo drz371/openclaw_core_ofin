@@ -40,6 +40,9 @@ pub enum Commands {
 
         #[arg(long, default_value = "[::1]:50052", help = "Server bind address")]
         addr: String,
+
+        #[arg(long, default_value = "agent_01", help = "Agent ID (agent_01=OpenClaw, agent_02=Hermes)")]
+        agent_id: String,
     },
 
     #[command(name = "call")]
@@ -96,8 +99,8 @@ impl Cli {
             Commands::Server { ref addr, ref agent_id } => {
                 self.handle_server(addr, agent_id).await
             }
-            Commands::Agent { ref config, server, ref addr } => {
-                self.handle_agent(config.clone(), server, addr.clone()).await
+            Commands::Agent { ref config, server, ref addr, ref agent_id } => {
+                self.handle_agent(config.clone(), server, addr.clone(), agent_id.clone()).await
             }
             Commands::Call { ref target, ref skill, ref args, ref addr } => {
                 self.handle_call(target.clone(), skill.clone(), args.clone(), addr.clone()).await
@@ -136,7 +139,7 @@ impl Cli {
         Ok(())
     }
 
-    async fn handle_agent(&self, config: Option<String>, server: bool, addr: String) -> Result<()> {
+    async fn handle_agent(&self, config: Option<String>, server: bool, addr: String, agent_id: String) -> Result<()> {
         use crate::agent::{Agent, AgentManager};
         use crate::net::{AgentRegistry, ComplianceChecker, start_server};
         use std::sync::Arc;
@@ -147,6 +150,7 @@ impl Cli {
             config = %config_path,
             server_mode = %server,
             address = %addr,
+            agent_id = %agent_id,
             event = "agent_start",
             status = "starting",
             "Starting agent with configuration"
@@ -163,9 +167,30 @@ impl Cli {
             return Err(anyhow::anyhow!("Configuration file not found: {}", config_path));
         }
 
-        let agent_id = "agent_01".to_string();
-        let agent = Agent::new(agent_id.clone(), "127.0.0.1".to_string(), 50052)
-            .with_skills(vec!["detect_objects".to_string(), "summarize_pdf".to_string()]);
+        let port: u16 = addr.split(':')
+            .last()
+            .and_then(|p| p.parse().ok())
+            .unwrap_or(50052);
+        let host = addr.split(':')
+            .next()
+            .unwrap_or("127.0.0.1")
+            .trim_start_matches('[');
+
+        let skills = match agent_id.as_str() {
+            "agent_02" => vec![
+                "analyze_context".to_string(),
+                "generate_response".to_string(),
+                "translate_text".to_string(),
+            ],
+            _ => vec![
+                "detect_objects".to_string(),
+                "summarize_pdf".to_string(),
+                "process_data".to_string(),
+            ],
+        };
+
+        let agent = Agent::new(agent_id.clone(), host.to_string(), port)
+            .with_skills(skills);
 
         let registry = Arc::new(AgentRegistry::new());
         let compliance = ComplianceChecker::new(crate::net::ComplianceConfig {
@@ -255,7 +280,18 @@ mod tests {
         let cli = Cli::try_parse_from(["clawfed", "server"]);
         assert!(cli.is_ok());
 
-        let cli = Cli::try_parse_from(["clawfed", "agent", "--config", "./test.toml"]);
+        let cli = Cli::try_parse_from(["clawfed", "agent", "--config", "./test.toml", "--server"]);
+        assert!(cli.is_ok());
+
+        let cli = Cli::try_parse_from([
+            "clawfed",
+            "agent",
+            "--agent-id",
+            "agent_02",
+            "--server",
+            "--addr",
+            "0.0.0.0:50053",
+        ]);
         assert!(cli.is_ok());
 
         let cli = Cli::try_parse_from([
