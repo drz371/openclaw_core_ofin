@@ -195,17 +195,26 @@ body::after {
 }
 
 .page {
-  display: none;
+  position: absolute;
+  visibility: hidden;
   opacity: 0;
   transform: translateY(20px);
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   padding: 2rem 4rem;
+  width: 100%;
+  left: 0;
+  top: 0;
+  pointer-events: none;
 }
 
 .page.active {
-  display: block;
+  position: relative;
+  visibility: visible;
   opacity: 1;
   transform: translateY(0);
+  pointer-events: auto;
+  top: auto;
+  left: auto;
 }
 
 .page-title {
@@ -681,6 +690,7 @@ body::after {
   border-radius: 16px;
   overflow: hidden;
   aspect-ratio: 4/3;
+  min-height: 400px;
 }
 
 #gameCanvas {

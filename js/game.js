@@ -55,9 +55,21 @@ class DQGame {
   
   initCanvas() {
     const wrapper = this.canvas.parentElement;
-    this.canvas.width = wrapper.offsetWidth * 2;
-    this.canvas.height = wrapper.offsetHeight * 2;
+    const rect = wrapper.getBoundingClientRect();
+    this.canvas.width = Math.max(rect.width * 2, 800);
+    this.canvas.height = Math.max(rect.height * 2, 600);
     this.ctx.scale(2, 2);
+  }
+  
+  resizeCanvas() {
+    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+    const wrapper = this.canvas.parentElement;
+    const rect = wrapper.getBoundingClientRect();
+    this.canvas.width = Math.max(rect.width * 2, 800);
+    this.canvas.height = Math.max(rect.height * 2, 600);
+    this.ctx.scale(2, 2);
+    this.stars = [];
+    this.generateStars();
   }
   
   bindEvents() {
