@@ -689,8 +689,10 @@ body::after {
   border: 1px solid rgba(0,212,255,0.15);
   border-radius: 16px;
   overflow: hidden;
-  aspect-ratio: 4/3;
-  min-height: 400px;
+  min-height: 450px;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
 }
 
 #gameCanvas {

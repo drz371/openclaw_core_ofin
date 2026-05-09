@@ -183,7 +183,7 @@ function initParticles() {
 }
 
 function initGamePage() {
-  if (typeof DQGame !== 'undefined') {
-    window.game = new DQGame();
+  if (typeof PixelGame !== 'undefined') {
+    window.game = new PixelGame();
   }
 }
