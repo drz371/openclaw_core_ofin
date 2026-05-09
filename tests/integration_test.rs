@@ -1,6 +1,8 @@
 use clawfed::cli::Cli;
+use clawfed::fl::FlClient;
+use clawfed::net::{ComplianceChecker, ComplianceConfig};
 use tempfile::NamedTempFile;
-use std::path::Path;
+use clap::Parser;
 
 #[test]
 fn test_cli_parsing_agent() {
@@ -181,6 +183,7 @@ fn test_delta_format_empty() {
 }
 
 #[tokio::test]
+#[ignore = "requires running FL coordinator server"]
 async fn test_fl_upload_success() {
     use clawfed::fl::FlClient;
     use clawfed::net::{ComplianceChecker, ComplianceConfig};
@@ -196,7 +199,7 @@ async fn test_fl_upload_success() {
     let lora_data = [0x4C, 0x6F, 0x52, 0x41, 0x00, 0x01];
     std::fs::write(&temp_file, &lora_data).unwrap();
 
-    let result = client.upload_delta("grasping_v1", temp_file.path()).await;
+    let result = client.upload_delta("grasping_v1", temp_file.path(), "http://[::1]:50051").await;
     assert!(result.is_ok());
 }
 
@@ -216,7 +219,7 @@ async fn test_fl_upload_compliance_blocked() {
     let lora_data = [0x4C, 0x6F, 0x52, 0x41, 0x00, 0x01];
     std::fs::write(&temp_file, &lora_data).unwrap();
 
-    let result = client.upload_delta("biometric_task", temp_file.path()).await;
+    let result = client.upload_delta("biometric_task", temp_file.path(), "http://[::1]:50051").await;
     assert!(result.is_err());
     assert!(result.unwrap_err().to_string().contains("Compliance"));
 }
@@ -237,7 +240,7 @@ async fn test_fl_upload_size_exceeded() {
     let large_data = vec![0u8; 11 * 1024 * 1024];
     std::fs::write(&temp_file, &large_data).unwrap();
 
-    let result = client.upload_delta("grasping_v1", temp_file.path()).await;
+    let result = client.upload_delta("grasping_v1", temp_file.path(), "http://[::1]:50051").await;
     assert!(result.is_err());
     assert!(result.unwrap_err().to_string().contains("exceeds maximum allowed"));
 }

@@ -70,7 +70,7 @@ impl AgentManager {
 
         let mut client = AgentClient::connect(coordinator_addr.to_string())
             .await
-            .context("Failed to connect to coordinator")?;
+            .map_err(|e| anyhow::anyhow!("Failed to connect to coordinator: {}", e))?;
 
         let agent_info = self.agent.to_agent_info();
         let response = client.register_agent(agent_info).await?;
@@ -106,7 +106,7 @@ impl AgentManager {
 
         let mut client = AgentClient::connect(coordinator_addr.to_string())
             .await
-            .context("Failed to connect to coordinator")?;
+            .map_err(|e| anyhow::anyhow!("Failed to connect to coordinator: {}", e))?;
 
         let response = client.discover_agents(skill_name).await?;
 
@@ -142,7 +142,7 @@ impl AgentManager {
 
         let mut client = AgentClient::connect(target_addr.to_string())
             .await
-            .context("Failed to connect to target agent")?;
+            .map_err(|e| anyhow::anyhow!("Failed to connect to target agent: {}", e))?;
 
         let response = client.call_skill(target_agent_id, skill_name, args_json).await?;
 

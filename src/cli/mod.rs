@@ -72,14 +72,15 @@ impl Cli {
         let env_filter = EnvFilter::try_from_default_env()
             .unwrap_or_else(|_| EnvFilter::new(log_level));
 
-        let subscriber = if log_format == "json" {
-            fmt().json().with_env_filter(env_filter).finish()
+        if log_format == "json" {
+            let subscriber = fmt().json().with_env_filter(env_filter).finish();
+            tracing::subscriber::set_global_default(subscriber)
+                .expect("Failed to set tracing subscriber");
         } else {
-            fmt().pretty().with_env_filter(env_filter).finish()
-        };
-
-        tracing::subscriber::set_global_default(subscriber)
-            .expect("Failed to set tracing subscriber");
+            let subscriber = fmt().pretty().with_env_filter(env_filter).finish();
+            tracing::subscriber::set_global_default(subscriber)
+                .expect("Failed to set tracing subscriber");
+        }
     }
 
     pub async fn run(self) -> Result<()> {
@@ -92,14 +93,14 @@ impl Cli {
         );
 
         match self.command {
-            Commands::Server { addr, agent_id } => {
+            Commands::Server { ref addr, ref agent_id } => {
                 self.handle_server(addr, agent_id).await
             }
-            Commands::Agent { config, server, addr } => {
-                self.handle_agent(config, server, addr).await
+            Commands::Agent { ref config, server, ref addr } => {
+                self.handle_agent(config.clone(), server, addr.clone()).await
             }
-            Commands::Call { target, skill, args, addr } => {
-                self.handle_call(target, skill, args, addr).await
+            Commands::Call { ref target, ref skill, ref args, ref addr } => {
+                self.handle_call(target.clone(), skill.clone(), args.clone(), addr.clone()).await
             }
             Commands::Fl { commands } => {
                 let agent_id = "default_agent".to_string();
@@ -108,7 +109,7 @@ impl Cli {
         }
     }
 
-    async fn handle_server(&self, addr: String, agent_id: String) -> Result<()> {
+    async fn handle_server(&self, addr: &str, agent_id: &str) -> Result<()> {
         use crate::net::{AgentRegistry, ComplianceChecker, start_server};
         use std::sync::Arc;
 
@@ -119,8 +120,6 @@ impl Cli {
             status = "starting",
             "Starting coordinator server"
         );
-
-        let registry = Arc::new(AgentRegistry::new());
         let compliance = Arc::new(ComplianceChecker::new(crate::net::ComplianceConfig {
             enabled: true,
             country: "CN".to_string(),
@@ -130,7 +129,9 @@ impl Cli {
         println!("  Agent ID: {}", agent_id);
         println!("  Press Ctrl+C to stop");
 
-        start_server(addr, registry, compliance).await?;
+        let registry = Arc::new(AgentRegistry::new());
+        start_server(addr.to_string(), registry, compliance).await
+            .map_err(|e| anyhow::anyhow!("Server error: {}", e))?;
 
         Ok(())
     }
@@ -138,7 +139,6 @@ impl Cli {
     async fn handle_agent(&self, config: Option<String>, server: bool, addr: String) -> Result<()> {
         use crate::agent::{Agent, AgentManager};
         use crate::net::{AgentRegistry, ComplianceChecker, start_server};
-        use crate::skill::{create_default_skills, SkillRegistry};
         use std::sync::Arc;
 
         let config_path = config.unwrap_or_else(|| "./clawfed.toml".to_string());
@@ -173,7 +173,9 @@ impl Cli {
             country: "CN".to_string(),
         });
 
-        let agent_manager = AgentManager::new(agent, registry.clone(), compliance);
+        let agent_manager = AgentManager::new(agent, Arc::try_unwrap(registry.clone()).unwrap_or_else(|_arc| {
+            panic!("Failed to unwrap Arc for AgentManager")
+        }), compliance);
 
         if server {
             println!("✓ Agent starting in server mode on {}", addr);
@@ -183,7 +185,8 @@ impl Cli {
             start_server(addr, registry, Arc::new(ComplianceChecker::new(crate::net::ComplianceConfig {
                 enabled: true,
                 country: "CN".to_string(),
-            })).await?;
+            }))).await
+                .map_err(|e| anyhow::anyhow!("Server error: {}", e))?;
         } else {
             println!("✓ Agent started with config: {}", config_path);
             println!("  Agent ID: {}", agent_id);
@@ -226,7 +229,8 @@ impl Cli {
             return Err(anyhow::anyhow!("Compliance check failed: {}", e.message()));
         }
 
-        let mut client = AgentClient::connect(addr).await?;
+        let mut client = AgentClient::connect(addr).await
+            .map_err(|e| anyhow::anyhow!("Failed to connect: {}", e))?;
         let args_json = args.unwrap_or_else(|| "{}".to_string());
         let response = client.call_skill(&target, &skill, &args_json).await?;
 

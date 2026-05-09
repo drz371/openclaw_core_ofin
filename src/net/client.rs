@@ -1,5 +1,5 @@
 use crate::proto::clawfed::{
-    agent_service_client::AgentServiceClient, fl_coordinator_client::FlCoordinatorClient,
+    agent_service_client::AgentServiceClient, fl_coordinator_client::FlCoordinatorClient as ProtoFlCoordinatorClient,
     AgentInfo, DiscoverRequest, DiscoverResponse, FlDeltaUpload, FlTaskListResponse,
     FlUploadResponse, RegisterRequest, RegisterResponse, SkillRequest, SkillResponse,
 };
@@ -12,7 +12,7 @@ pub struct AgentClient {
 }
 
 impl AgentClient {
-    pub async fn connect(addr: String) -> Result<Self, tonic::transport::Error> {
+    pub async fn connect(addr: String) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         info!(address = %addr, event = "client_connect", status = "connecting", "Connecting to agent");
 
         let channel = Channel::from_shared(addr)?
@@ -114,15 +114,16 @@ impl AgentClient {
     }
 }
 
-pub struct FlCoordinatorClient {
-    client: FlCoordinatorClient<Channel>,
+pub struct FlCoordinatorClientWrapper {
+    client: ProtoFlCoordinatorClient<Channel>,
 }
 
-impl FlCoordinatorClient {
-    pub async fn connect(addr: String) -> Result<Self, tonic::transport::Error> {
+impl FlCoordinatorClientWrapper {
+    pub async fn connect(addr: String) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         info!(address = %addr, event = "coordinator_connect", status = "connecting", "Connecting to FL coordinator");
 
-        let channel = Channel::from_shared(addr)?
+        let uri = addr.parse::<tonic::transport::Uri>()?;
+        let channel = Channel::builder(uri)
             .timeout(Duration::from_secs(30))
             .connect()
             .await?;
@@ -130,7 +131,7 @@ impl FlCoordinatorClient {
         info!(event = "coordinator_connected", status = "success", "Connected to coordinator successfully");
 
         Ok(Self {
-            client: FlCoordinatorClient::new(channel),
+            client: ProtoFlCoordinatorClient::new(channel),
         })
     }
 
@@ -154,8 +155,8 @@ impl FlCoordinatorClient {
         let request = FlDeltaUpload {
             agent_id: agent_id.to_string(),
             task_id: task_id.to_string(),
-            delta_data,
             size_bytes: delta_data.len() as i64,
+            delta_data,
             format: format.to_string(),
         };
 

@@ -85,7 +85,7 @@ impl FlClient {
         Ok(())
     }
 
-    fn validate_delta_format(&self, data: &[u8]) -> Result<()> {
+    pub fn validate_delta_format(&self, data: &[u8]) -> Result<()> {
         if data.is_empty() {
             return Err(anyhow::anyhow!("Delta data is empty"));
         }
@@ -123,7 +123,7 @@ impl FlClient {
 
         let mut client = FlCoordinatorClient::connect(coordinator_addr.to_string())
             .await
-            .context("Failed to connect to FL coordinator")?;
+            .map_err(|e| anyhow::anyhow!("Failed to connect to FL coordinator: {}", e))?;
 
         let format = if data.len() >= 4 {
             match &data[0..4] {
@@ -214,7 +214,7 @@ mod tests {
         let large_data = vec![0u8; 11 * 1024 * 1024];
         std::fs::write(&temp_file, &large_data).unwrap();
 
-        let result = client.upload_delta("grasping_v1", temp_file.path()).await;
+        let result = client.upload_delta("grasping_v1", temp_file.path(), "http://[::1]:50051").await;
         assert!(result.is_err());
         assert!(result.unwrap_err().to_string().contains("exceeds maximum allowed"));
     }
@@ -227,12 +227,13 @@ mod tests {
         let lora_data = [0x4C, 0x6F, 0x52, 0x41, 0x00, 0x01];
         std::fs::write(&temp_file, &lora_data).unwrap();
 
-        let result = client.upload_delta("biometric_task", temp_file.path()).await;
+        let result = client.upload_delta("biometric_task", temp_file.path(), "http://[::1]:50051").await;
         assert!(result.is_err());
         assert!(result.unwrap_err().to_string().contains("Compliance"));
     }
 
     #[tokio::test]
+    #[ignore = "requires running FL coordinator server"]
     async fn test_upload_delta_success() {
         let client = create_test_client();
         let mut temp_file = NamedTempFile::new().unwrap();
@@ -240,7 +241,7 @@ mod tests {
         let lora_data = [0x4C, 0x6F, 0x52, 0x41, 0x00, 0x01];
         std::fs::write(&temp_file, &lora_data).unwrap();
 
-        let result = client.upload_delta("grasping_v1", temp_file.path()).await;
+        let result = client.upload_delta("grasping_v1", temp_file.path(), "http://[::1]:50051").await;
         assert!(result.is_ok());
     }
 }

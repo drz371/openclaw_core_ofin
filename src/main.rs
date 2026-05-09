@@ -1,4 +1,9 @@
+mod agent;
 mod cli;
+mod fl;
+mod net;
+mod proto;
+mod skill;
 
 use clap::Parser;
 use cli::Cli;
