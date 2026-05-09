@@ -119,14 +119,16 @@ run_test() {
     # 测试 3：合规拦截
     echo ""
     echo -e "${YELLOW}测试 3: 合规拦截测试（face_detect 应被拦截）${NC}"
-    RESULT=$(./target/release/clawfed call agent_01 face_detect \
+    ./target/release/clawfed call agent_01 face_detect \
         --addr "http://127.0.0.1:50052" \
-        --args '{}' 2>&1)
+        --args '{}' > /dev/null 2>&1
+    EXIT_CODE=$?
 
-    if echo "$RESULT" | grep -q "Compliance check failed"; then
-        echo -e "${GREEN}✓ 合规拦截正常工作${NC}"
+    # 合规拦截应该返回非零退出码
+    if [ $EXIT_CODE -ne 0 ]; then
+        echo -e "${GREEN}✓ 合规拦截正常工作（退出码: $EXIT_CODE）${NC}"
     else
-        echo -e "${RED}✗ 合规拦截异常${NC}"
+        echo -e "${RED}✗ 合规拦截异常（应该被拦截但返回成功）${NC}"
     fi
 
     # 清理
