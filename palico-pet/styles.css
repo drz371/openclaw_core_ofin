@@ -1,0 +1,784 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    background: linear-gradient(180deg, #87CEEB 0%, #B0E0E6 50%, #F0E68C 100%);
+    overflow: hidden;
+    cursor: default;
+    font-family: 'ZCOOL KuaiLe', cursive;
+}
+
+/* 背景装饰 */
+body::before {
+    content: '';
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100px;
+    background: linear-gradient(180deg, transparent 0%, #98D8C8 30%, #7BC67C 100%);
+    z-index: 0;
+}
+
+/* 草地装饰 */
+body::after {
+    content: '';
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    background: repeating-linear-gradient(
+        90deg,
+        #5A9E5C 0px,
+        #5A9E5C 3px,
+        transparent 3px,
+        transparent 15px
+    );
+    z-index: 1;
+    opacity: 0.5;
+}
+
+#desktop-pet {
+    position: fixed;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+}
+
+/* ====== 艾露猫主体 ====== */
+#palico {
+    position: relative;
+    width: 150px;
+    height: 200px;
+    animation: breathe 2s ease-in-out infinite;
+    cursor: grab;
+    transition: transform 0.3s ease;
+}
+
+#palico:hover {
+    transform: scale(1.05);
+}
+
+#palico.dragging {
+    cursor: grabbing;
+    animation: none;
+}
+
+#palico.happy {
+    animation: jump 0.5s ease-in-out;
+}
+
+#palico.sleeping {
+    animation: sleep 1s ease-in-out infinite;
+}
+
+#palico.eating {
+    animation: munch 0.3s ease-in-out 3;
+}
+
+/* 呼吸动画 */
+@keyframes breathe {
+    0%, 100% {
+        transform: translateY(0) scaleY(1);
+    }
+    50% {
+        transform: translateY(-3px) scaleY(1.02);
+    }
+}
+
+@keyframes jump {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-50px);
+    }
+}
+
+@keyframes sleep {
+    0%, 100% {
+        transform: rotate(-5deg) translateY(0);
+    }
+    50% {
+        transform: rotate(5deg) translateY(-5px);
+    }
+}
+
+@keyframes munch {
+    0%, 100% {
+        transform: scaleY(1);
+    }
+    50% {
+        transform: scaleY(0.95);
+    }
+}
+
+/* ====== 耳朵 ====== */
+#ears {
+    position: absolute;
+    top: -30px;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 15px;
+}
+
+.ear {
+    width: 35px;
+    height: 50px;
+    background: #FFA07A;
+    border-radius: 50% 50% 0 0;
+    position: relative;
+    transform-origin: bottom center;
+    animation: earWiggle 3s ease-in-out infinite;
+}
+
+.ear::after {
+    content: '';
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 30px;
+    background: #FFB6C1;
+    border-radius: 50% 50% 0 0;
+}
+
+#ear-left {
+    transform: rotate(-15deg);
+}
+
+#ear-right {
+    transform: rotate(15deg);
+    animation-delay: 0.5s;
+}
+
+@keyframes earWiggle {
+    0%, 100% {
+        transform: rotate(var(--ear-rotate, -15deg));
+    }
+    50% {
+        transform: rotate(calc(var(--ear-rotate, -15deg) + 5deg));
+    }
+}
+
+/* ====== 头部 ====== */
+#head {
+    position: absolute;
+    top: 0;
+    width: 120px;
+    height: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(180deg, #FFA07A 0%, #FF8C69 100%);
+    border-radius: 50% 50% 45% 45%;
+    box-shadow: 
+        0 5px 15px rgba(0, 0, 0, 0.15),
+        inset 0 -5px 10px rgba(255, 140, 105, 0.5);
+}
+
+/* 头部条纹 */
+#head::before {
+    content: '';
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 25px;
+    background: repeating-linear-gradient(
+        180deg,
+        transparent 0px,
+        transparent 4px,
+        #FF7043 4px,
+        #FF7043 8px
+    );
+    border-radius: 50%;
+}
+
+/* 腮红 */
+#head::after {
+    content: '';
+    position: absolute;
+    bottom: 25px;
+    width: 100%;
+    background: radial-gradient(ellipse at 20% 50%, #FFB6C1 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 50%, #FFB6C1 0%, transparent 50%);
+}
+
+/* ====== 眼睛 ====== */
+#eyes {
+    position: absolute;
+    top: 35px;
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    padding: 0 25px;
+}
+
+.eye {
+    width: 25px;
+    height: 28px;
+    background: #2C1810;
+    border-radius: 50%;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.eye::before {
+    content: '';
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    width: 10px;
+    height: 12px;
+    background: white;
+    border-radius: 50%;
+    z-index: 2;
+}
+
+.pupil {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: 8px;
+    height: 10px;
+    background: #1A0F0A;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+/* 眨眼动画 */
+.eye.blink {
+    height: 4px;
+    border-radius: 10px;
+}
+
+/* 闭眼（睡觉） */
+.eye.sleeping {
+    height: 3px;
+    border-radius: 0 0 50% 50%;
+    background: #2C1810;
+}
+
+.eye.sleeping::before,
+.eye.sleeping .pupil {
+    display: none;
+}
+
+/* 开心眼睛 */
+.eye.happy {
+    height: 12px;
+    border-radius: 50% 50% 0 0;
+    background: #2C1810;
+}
+
+.eye.happy::before,
+.eye.happy .pupil {
+    display: none;
+}
+
+/* ====== 鼻子 ====== */
+#nose {
+    position: absolute;
+    top: 55px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 10px;
+    height: 8px;
+    background: #FF6347;
+    border-radius: 50% 50% 50% 50% / 30% 30% 70% 70%;
+}
+
+/* ====== 嘴巴 ====== */
+#mouth {
+    position: absolute;
+    top: 65px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 10px;
+    border: 3px solid #2C1810;
+    border-top: none;
+    border-radius: 0 0 50% 50%;
+    transition: all 0.3s ease;
+}
+
+#mouth.eating {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #FF6347;
+    border: none;
+}
+
+#mouth.happy {
+    width: 30px;
+    height: 15px;
+}
+
+/* ====== 胡须 ====== */
+#whiskers {
+    position: absolute;
+    top: 55px;
+    width: 100%;
+}
+
+.whisker {
+    position: absolute;
+    width: 25px;
+    height: 2px;
+    background: #2C1810;
+    opacity: 0.4;
+    transition: transform 0.2s ease;
+}
+
+#whisker-left-1 {
+    left: 5px;
+    transform: rotate(-10deg);
+}
+
+#whisker-left-2 {
+    left: 5px;
+    top: 10px;
+    transform: rotate(10deg);
+}
+
+#whisker-right-1 {
+    right: 5px;
+    transform: rotate(10deg);
+}
+
+#whisker-right-2 {
+    right: 5px;
+    top: 10px;
+    transform: rotate(-10deg);
+}
+
+/* ====== 身体 ====== */
+#body {
+    position: absolute;
+    top: 90px;
+    width: 90px;
+    height: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(180deg, #FFA07A 0%, #FF8C69 100%);
+    border-radius: 40% 40% 30% 30%;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* 身体条纹 */
+#body::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 40px;
+    background: repeating-linear-gradient(
+        180deg,
+        transparent 0px,
+        transparent 5px,
+        rgba(255, 112, 67, 0.4) 5px,
+        rgba(255, 112, 67, 0.4) 10px
+    );
+}
+
+/* 肚子 */
+#body::after {
+    content: '';
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 40px;
+    background: #FFE4C4;
+    border-radius: 50%;
+}
+
+/* ====== 围巾 ====== */
+#scarf {
+    position: absolute;
+    top: 90px;
+    width: 100px;
+    height: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #DC143C;
+    border-radius: 10px;
+    z-index: 2;
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+}
+
+#scarf::before {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 14px;
+    background: repeating-linear-gradient(
+        90deg,
+        transparent 0px,
+        transparent 8px,
+        #FFD700 8px,
+        #FFD700 16px
+    );
+    opacity: 0.6;
+}
+
+#scarf-tail {
+    position: absolute;
+    top: 105px;
+    right: 35px;
+    width: 15px;
+    height: 30px;
+    background: #DC143C;
+    border-radius: 0 0 5px 5px;
+    z-index: 2;
+    transform-origin: top center;
+    animation: scarfSwing 2s ease-in-out infinite;
+}
+
+@keyframes scarfSwing {
+    0%, 100% {
+        transform: rotate(-5deg);
+    }
+    50% {
+        transform: rotate(5deg);
+    }
+}
+
+/* ====== 手臂 ====== */
+.arm {
+    position: absolute;
+    top: 100px;
+    width: 25px;
+    height: 50px;
+    background: #FFA07A;
+    border-radius: 50%;
+    z-index: 1;
+    transition: transform 0.3s ease;
+}
+
+#arm-left {
+    left: 10px;
+    transform: rotate(15deg);
+}
+
+#arm-right {
+    right: 10px;
+    transform: rotate(-15deg);
+}
+
+#palico.waving #arm-right {
+    animation: wave 0.5s ease-in-out 3;
+}
+
+@keyframes wave {
+    0%, 100% {
+        transform: rotate(-15deg);
+    }
+    50% {
+        transform: rotate(-40deg) translateY(-10px);
+    }
+}
+
+/* ====== 尾巴 ====== */
+#tail {
+    position: absolute;
+    bottom: 20px;
+    right: 25px;
+    width: 60px;
+    height: 100px;
+    background: transparent;
+    border-right: 15px solid #FFA07A;
+    border-top: 15px solid transparent;
+    border-bottom: 15px solid transparent;
+    border-radius: 0 50% 50% 0;
+    transform-origin: bottom center;
+    animation: tailWag 1s ease-in-out infinite;
+}
+
+#tail::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: -5px;
+    width: 20px;
+    height: 30px;
+    background: #FF8C69;
+    border-radius: 50%;
+}
+
+@keyframes tailWag {
+    0%, 100% {
+        transform: rotate(-10deg);
+    }
+    50% {
+        transform: rotate(10deg);
+    }
+}
+
+/* ====== 脚 ====== */
+.foot {
+    position: absolute;
+    bottom: -5px;
+    width: 30px;
+    height: 20px;
+    background: #FF8C69;
+    border-radius: 50% 50% 40% 40%;
+}
+
+#foot-left {
+    left: 25px;
+}
+
+#foot-right {
+    right: 25px;
+}
+
+/* ====== 对话气泡 ====== */
+#speech-bubble {
+    position: absolute;
+    top: -80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 12px 20px;
+    border-radius: 20px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    z-index: 100;
+}
+
+#speech-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid white;
+}
+
+#speech-bubble.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-10px);
+}
+
+#bubble-text {
+    font-size: 14px;
+    color: #333;
+}
+
+/* ====== 状态条 ====== */
+#status-bar {
+    position: absolute;
+    top: -160px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    width: 180px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 50;
+}
+
+#desktop-pet:hover #status-bar {
+    opacity: 1;
+}
+
+.bar {
+    margin-bottom: 8px;
+}
+
+.bar:last-child {
+    margin-bottom: 0;
+}
+
+.bar-label {
+    font-size: 11px;
+    color: #666;
+    margin-bottom: 3px;
+}
+
+.bar-fill {
+    height: 8px;
+    background: #E0E0E0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.bar-fill::after {
+    content: '';
+    display: block;
+    height: 100%;
+    width: var(--fill-percent, 80%);
+    background: var(--fill-color, #4CAF50);
+    border-radius: 4px;
+    transition: width 0.5s ease, background 0.3s ease;
+}
+
+#hunger-fill::after {
+    --fill-color: #FF9800;
+}
+
+#happiness-fill::after {
+    --fill-color: #4CAF50;
+}
+
+#energy-fill::after {
+    --fill-color: #2196F3;
+}
+
+/* ====== 控制面板 ====== */
+#controls {
+    position: absolute;
+    bottom: -60px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 50;
+}
+
+#desktop-pet:hover #controls {
+    opacity: 1;
+}
+
+.control-btn {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 20px;
+    background: white;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    font-family: 'ZCOOL KuaiLe', cursive;
+    font-size: 13px;
+    color: #333;
+    transition: all 0.2s ease;
+}
+
+.control-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+.control-btn:active {
+    transform: translateY(0);
+}
+
+#btn-feed:hover {
+    background: #FFF3E0;
+}
+
+#btn-play:hover {
+    background: #E3F2FD;
+}
+
+#btn-rest:hover {
+    background: #F3E5F5;
+}
+
+#btn-pet:hover {
+    background: #FFEBEE;
+}
+
+/* ====== 特效 ====== */
+.heart {
+    position: absolute;
+    font-size: 24px;
+    animation: floatUp 1s ease-out forwards;
+    pointer-events: none;
+    z-index: 200;
+}
+
+@keyframes floatUp {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-100px) scale(0.5);
+    }
+}
+
+.zzz {
+    position: absolute;
+    font-size: 18px;
+    color: #666;
+    animation: zzzFloat 2s ease-out forwards;
+    pointer-events: none;
+    z-index: 200;
+}
+
+@keyframes zzzFloat {
+    0% {
+        opacity: 1;
+        transform: translate(0, 0) scale(0.8);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(30px, -80px) scale(1.2);
+    }
+}
+
+.music-note {
+    position: absolute;
+    font-size: 20px;
+    animation: musicFloat 1.5s ease-out forwards;
+    pointer-events: none;
+    z-index: 200;
+}
+
+@keyframes musicFloat {
+    0% {
+        opacity: 1;
+        transform: translate(0, 0) rotate(0deg);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(40px, -60px) rotate(20deg);
+    }
+}
+
+/* ====== 响应式调整 ====== */
+@media (max-width: 768px) {
+    #palico {
+        transform: scale(0.8);
+    }
+    
+    #status-bar {
+        width: 150px;
+        padding: 8px;
+    }
+    
+    .control-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+}

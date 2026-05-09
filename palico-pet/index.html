@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>艾露猫桌面宠物 | Palico Desktop Pet</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="desktop-pet">
+        <!-- 对话气泡 -->
+        <div id="speech-bubble" class="hidden">
+            <div id="bubble-text"></div>
+        </div>
+
+        <!-- 艾露猫主体 -->
+        <div id="palico">
+            <!-- 耳朵 -->
+            <div id="ears">
+                <div id="ear-left" class="ear"></div>
+                <div id="ear-right" class="ear"></div>
+            </div>
+
+            <!-- 头部 -->
+            <div id="head">
+                <!-- 眼睛 -->
+                <div id="eyes">
+                    <div id="eye-left" class="eye">
+                        <div class="pupil"></div>
+                    </div>
+                    <div id="eye-right" class="eye">
+                        <div class="pupil"></div>
+                    </div>
+                </div>
+
+                <!-- 鼻子 -->
+                <div id="nose"></div>
+
+                <!-- 嘴巴 -->
+                <div id="mouth"></div>
+
+                <!-- 胡须 -->
+                <div id="whiskers">
+                    <div id="whisker-left-1" class="whisker"></div>
+                    <div id="whisker-left-2" class="whisker"></div>
+                    <div id="whisker-right-1" class="whisker"></div>
+                    <div id="whisker-right-2" class="whisker"></div>
+                </div>
+            </div>
+
+            <!-- 身体 -->
+            <div id="body">
+                <!-- 围巾 -->
+                <div id="scarf"></div>
+                <!-- 围巾尾巴 -->
+                <div id="scarf-tail"></div>
+                <!-- 手臂 -->
+                <div id="arm-left" class="arm"></div>
+                <div id="arm-right" class="arm"></div>
+            </div>
+
+            <!-- 尾巴 -->
+            <div id="tail"></div>
+
+            <!-- 脚 -->
+            <div id="feet">
+                <div id="foot-left" class="foot"></div>
+                <div id="foot-right" class="foot"></div>
+            </div>
+        </div>
+
+        <!-- 状态指示器 -->
+        <div id="status-bar">
+            <div id="hunger-bar" class="bar">
+                <div class="bar-label">🍖 饥饿度</div>
+                <div class="bar-fill" id="hunger-fill"></div>
+            </div>
+            <div id="happiness-bar" class="bar">
+                <div class="bar-label">😊 心情</div>
+                <div class="bar-fill" id="happiness-fill"></div>
+            </div>
+            <div id="energy-bar" class="bar">
+                <div class="bar-label">⚡ 精力</div>
+                <div class="bar-fill" id="energy-fill"></div>
+            </div>
+        </div>
+
+        <!-- 控制面板 -->
+        <div id="controls">
+            <button id="btn-feed" class="control-btn" title="喂食">🍖 喂食</button>
+            <button id="btn-play" class="control-btn" title="玩耍">🎾 玩耍</button>
+            <button id="btn-rest" class="control-btn" title="休息">💤 休息</button>
+            <button id="btn-pet" class="control-btn" title="抚摸">❤️ 抚摸</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
