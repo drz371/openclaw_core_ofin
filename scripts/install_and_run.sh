@@ -5,8 +5,6 @@
 #   作者：OpenClaw Team
 # =====================================================
 
-set -e
-
 # 颜色定义
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -71,8 +69,8 @@ run_test() {
     echo ""
 
     # 清理之前的进程
-    pkill -f "clawfed server" 2>/dev/null || true
-    pkill -f "clawfed agent" 2>/dev/null || true
+    pkill -f "clawfed server" || true
+    pkill -f "clawfed agent" || true
     sleep 1
 
     echo -e "${YELLOW}启动协调器（端口 50051）...${NC}"
@@ -119,9 +117,11 @@ run_test() {
     # 测试 3：合规拦截
     echo ""
     echo -e "${YELLOW}测试 3: 合规拦截测试（face_detect 应被拦截）${NC}"
-    ./target/release/clawfed call agent_01 face_detect \
-        --addr "http://127.0.0.1:50052" \
-        --args '{}' > /dev/null 2>&1
+    {
+        ./target/release/clawfed call agent_01 face_detect \
+            --addr "http://127.0.0.1:50052" \
+            --args '{}'
+    } > /dev/null 2>&1
     EXIT_CODE=$?
 
     # 合规拦截应该返回非零退出码
