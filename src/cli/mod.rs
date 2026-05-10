@@ -198,11 +198,19 @@ impl Cli {
             country: "CN".to_string(),
         });
 
+        let coordinator_addr = std::env::var("COORDINATOR_ADDR")
+            .unwrap_or_else(|_| "http://[::1]:50051".to_string());
+
         if server {
             registry.register(agent.to_agent_info()).await
                 .map_err(|e| anyhow::anyhow!("Failed to register agent: {}", e))?;
 
-            let _agent_manager = AgentManager::new(agent, AgentRegistry::new(), compliance);
+            let agent_manager = AgentManager::new(agent, AgentRegistry::new(), compliance);
+
+            match agent_manager.register_with_coordinator(&coordinator_addr).await {
+                Ok(_) => println!("  → Registered with coordinator at {}", coordinator_addr),
+                Err(e) => println!("  ⚠ Failed to register with coordinator: {}", e),
+            }
 
             println!("✓ Agent starting in server mode on {}", addr);
             println!("  Agent ID: {}", agent_id);
