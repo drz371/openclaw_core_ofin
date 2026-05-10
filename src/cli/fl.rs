@@ -109,7 +109,7 @@ async fn handle_aggregate(task_id: String, coordinator_addr: String) -> Result<(
         "Processing aggregate command"
     );
 
-    let mut client = crate::net::FlCoordinatorClientWrapper::connect(coordinator_addr).await
+    let mut client = crate::net::client::FlCoordinatorClientWrapper::connect(coordinator_addr).await
         .map_err(|e| anyhow::anyhow!("Failed to connect to coordinator: {}", e))?;
 
     match client.trigger_aggregation(&task_id).await {
@@ -142,7 +142,7 @@ async fn handle_get_model(task_id: String, coordinator_addr: String, output_path
         "Processing get-model command"
     );
 
-    let mut client = crate::net::FlCoordinatorClientWrapper::connect(coordinator_addr).await
+    let mut client = crate::net::client::FlCoordinatorClientWrapper::connect(coordinator_addr).await
         .map_err(|e| anyhow::anyhow!("Failed to connect to coordinator: {}", e))?;
 
     match client.get_aggregated_model(&task_id).await {
