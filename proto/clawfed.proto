@@ -43,6 +43,15 @@ message DiscoverResponse {
   repeated AgentInfo agents = 1;
 }
 
+message GetAgentRequest {
+  string agent_id = 1;
+}
+
+message GetAgentResponse {
+  bool success = 1;
+  AgentInfo agent = 2;
+}
+
 message FlDeltaUpload {
   string agent_id = 1;
   string task_id = 2;
@@ -94,6 +103,7 @@ service AgentService {
   rpc CallSkill(SkillRequest) returns (SkillResponse);
   rpc RegisterAgent(RegisterRequest) returns (RegisterResponse);
   rpc DiscoverAgents(DiscoverRequest) returns (DiscoverResponse);
+  rpc GetAgent(GetAgentRequest) returns (GetAgentResponse);
 }
 
 service FlCoordinator {

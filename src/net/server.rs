@@ -2,8 +2,8 @@ use crate::net::compliance::ComplianceChecker;
 use crate::proto::clawfed::{
     agent_service_server::{AgentService, AgentServiceServer},
     fl_coordinator_server::{FlCoordinator, FlCoordinatorServer},
-    AgentInfo, DiscoverRequest, DiscoverResponse, FlDeltaUpload, FlTaskInfo,
-    FlTaskListResponse, FlUploadResponse, RegisterRequest, RegisterResponse,
+    AgentInfo, DiscoverRequest, DiscoverResponse, GetAgentRequest, GetAgentResponse,
+    FlDeltaUpload, FlTaskInfo, FlTaskListResponse, FlUploadResponse, RegisterRequest, RegisterResponse,
     SkillRequest, SkillResponse,
 };
 use std::collections::HashMap;
@@ -173,6 +173,45 @@ impl AgentService for AgentServiceImpl {
         );
 
         Ok(Response::new(DiscoverResponse { agents }))
+    }
+
+    async fn get_agent(
+        &self,
+        request: Request<GetAgentRequest>,
+    ) -> Result<Response<GetAgentResponse>, Status> {
+        let req = request.into_inner();
+
+        tracing::info!(
+            agent_id = %req.agent_id,
+            event = "get_agent",
+            status = "searching",
+            "Getting agent info"
+        );
+
+        match self.registry.get_agent(&req.agent_id).await {
+            Some(agent_info) => {
+                tracing::info!(
+                    agent_id = %req.agent_id,
+                    address = %agent_info.address,
+                    event = "get_agent_found",
+                    status = "success",
+                    "Agent found"
+                );
+                Ok(Response::new(GetAgentResponse {
+                    success: true,
+                    agent: Some(agent_info),
+                }))
+            }
+            None => {
+                tracing::warn!(
+                    agent_id = %req.agent_id,
+                    event = "get_agent_not_found",
+                    status = "not_found",
+                    "Agent not found"
+                );
+                Err(Status::not_found(format!("Agent {} not found", req.agent_id)))
+            }
+        }
     }
 }
 

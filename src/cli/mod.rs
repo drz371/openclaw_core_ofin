@@ -167,14 +167,23 @@ impl Cli {
             return Err(anyhow::anyhow!("Configuration file not found: {}", config_path));
         }
 
-        let port: u16 = addr.split(':')
-            .last()
-            .and_then(|p| p.parse().ok())
-            .unwrap_or(50052);
-        let host = addr.split(':')
-            .next()
-            .unwrap_or("127.0.0.1")
-            .trim_start_matches('[');
+        let port: u16 = if addr.starts_with('[') {
+            addr.split(']').nth(1)
+                .and_then(|p| p.trim_start_matches(':').parse().ok())
+                .unwrap_or(50052)
+        } else {
+            addr.split(':').last()
+                .and_then(|p| p.parse().ok())
+                .unwrap_or(50052)
+        };
+
+        let host = if addr.starts_with('[') {
+            addr.split('[').nth(1)
+                .and_then(|p| p.split(']').next())
+                .unwrap_or("::1")
+        } else {
+            addr.split(':').next().unwrap_or("127.0.0.1")
+        };
 
         let skills = match agent_id.as_str() {
             "agent_02" => vec![
@@ -189,26 +198,25 @@ impl Cli {
             ],
         };
 
-        let agent = Agent::new(agent_id.clone(), host.to_string(), port)
-            .with_skills(skills);
-
         let registry = Arc::new(AgentRegistry::new());
         let compliance = ComplianceChecker::new(crate::net::ComplianceConfig {
             enabled: true,
             country: "CN".to_string(),
         });
 
-        let coordinator_addr = std::env::var("COORDINATOR_ADDR")
-            .unwrap_or_else(|_| "http://[::1]:50051".to_string());
-
         if server {
-            registry.register(agent.to_agent_info()).await
+            let agent_skills = skills.clone();
+            let agent_address = host.to_string();
+            let mut local_agent = Agent::new(agent_id.clone(), agent_address.clone(), port)
+                .with_skills(agent_skills);
+
+            registry.register(local_agent.to_agent_info()).await
                 .map_err(|e| anyhow::anyhow!("Failed to register agent: {}", e))?;
 
-            let agent_manager = AgentManager::new(agent, AgentRegistry::new(), compliance);
+            let agent_manager = crate::agent::AgentManager::new(local_agent, AgentRegistry::new(), compliance);
 
-            match agent_manager.register_with_coordinator(&coordinator_addr).await {
-                Ok(_) => println!("  → Registered with coordinator at {}", coordinator_addr),
+            match agent_manager.register_with_coordinator(&std::env::var("COORDINATOR_ADDR").unwrap_or_else(|_| "http://[::1]:50051".to_string())).await {
+                Ok(_) => println!("  → Registered with coordinator"),
                 Err(e) => println!("  ⚠ Failed to register with coordinator: {}", e),
             }
 
@@ -263,7 +271,26 @@ impl Cli {
             return Err(anyhow::anyhow!("Compliance check failed: {}", e.message()));
         }
 
-        let mut client = AgentClient::connect(addr).await
+        let target_addr = {
+            let mut discover_client = AgentClient::connect(addr.clone()).await
+                .map_err(|e| anyhow::anyhow!("Failed to connect to coordinator: {}", e))?;
+
+            let response = discover_client.get_agent(&target).await
+                .map_err(|e| anyhow::anyhow!("Failed to get agent: {}", e))?;
+
+            let agent = response.agent
+                .ok_or_else(|| anyhow::anyhow!("Agent {} info not found", target))?;
+
+            let discovered_addr = if agent.address.contains(':') {
+                format!("http://[{}]:{}", agent.address, agent.port)
+            } else {
+                format!("http://{}:{}", agent.address, agent.port)
+            };
+            info!(target = %target, discovered_addr = %discovered_addr, "Discovered target agent address");
+            discovered_addr
+        };
+
+        let mut client = AgentClient::connect(target_addr).await
             .map_err(|e| anyhow::anyhow!("Failed to connect: {}", e))?;
         let args_json = args.unwrap_or_else(|| "{}".to_string());
         let response = client.call_skill(&target, &skill, &args_json).await?;

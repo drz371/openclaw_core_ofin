@@ -1,8 +1,8 @@
 use crate::proto::clawfed::{
     agent_service_client::AgentServiceClient, fl_coordinator_client::FlCoordinatorClient as ProtoFlCoordinatorClient,
-    AggregationRequest, AggregationResponse, AgentInfo, DiscoverRequest, DiscoverResponse, 
-    FlDeltaUpload, FlTaskListResponse, FlUploadResponse, GetModelRequest, GetModelResponse,
-    RegisterRequest, RegisterResponse, SkillRequest, SkillResponse,
+    AggregationRequest, AggregationResponse, AgentInfo, DiscoverRequest, DiscoverResponse,
+    FlDeltaUpload, FlTaskListResponse, FlUploadResponse, GetAgentRequest, GetAgentResponse,
+    GetModelRequest, GetModelResponse, RegisterRequest, RegisterResponse, SkillRequest, SkillResponse,
 };
 use std::time::Duration;
 use tonic::transport::Channel;
@@ -109,6 +109,31 @@ impl AgentClient {
             event = "agent_discovery_completed",
             status = "success",
             "Agent discovery completed"
+        );
+
+        Ok(response)
+    }
+
+    pub async fn get_agent(&mut self, agent_id: &str) -> Result<GetAgentResponse, tonic::Status> {
+        info!(
+            agent_id = %agent_id,
+            event = "get_agent",
+            status = "requesting",
+            "Getting agent info"
+        );
+
+        let request = GetAgentRequest {
+            agent_id: agent_id.to_string(),
+        };
+
+        let response = self.client.get_agent(request).await?.into_inner();
+
+        info!(
+            agent_id = %agent_id,
+            success = %response.success,
+            event = "get_agent_completed",
+            status = "success",
+            "Get agent completed"
         );
 
         Ok(response)
