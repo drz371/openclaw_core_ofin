@@ -1,7 +1,8 @@
 use crate::proto::clawfed::{
     agent_service_client::AgentServiceClient, fl_coordinator_client::FlCoordinatorClient as ProtoFlCoordinatorClient,
-    AgentInfo, DiscoverRequest, DiscoverResponse, FlDeltaUpload, FlTaskListResponse,
-    FlUploadResponse, RegisterRequest, RegisterResponse, SkillRequest, SkillResponse,
+    AggregationRequest, AggregationResponse, AgentInfo, DiscoverRequest, DiscoverResponse, 
+    FlDeltaUpload, FlTaskListResponse, FlUploadResponse, GetModelRequest, GetModelResponse,
+    RegisterRequest, RegisterResponse, SkillRequest, SkillResponse,
 };
 use std::time::Duration;
 use tonic::transport::Channel;
@@ -188,6 +189,56 @@ impl FlCoordinatorClientWrapper {
             event = "fl_task_list_completed",
             status = "success",
             "Task list completed"
+        );
+
+        Ok(response)
+    }
+
+    pub async fn trigger_aggregation(&mut self, task_id: &str) -> Result<AggregationResponse, tonic::Status> {
+        info!(
+            task_id = %task_id,
+            event = "fl_aggregation_trigger",
+            status = "triggering",
+            "Triggering federated aggregation"
+        );
+
+        let request = AggregationRequest {
+            task_id: task_id.to_string(),
+        };
+
+        let response = self.client.trigger_aggregation(request).await?.into_inner();
+
+        info!(
+            task_id = %task_id,
+            delta_count = %response.delta_count,
+            event = "fl_aggregation_completed",
+            status = "success",
+            "Federated aggregation completed"
+        );
+
+        Ok(response)
+    }
+
+    pub async fn get_aggregated_model(&mut self, task_id: &str) -> Result<GetModelResponse, tonic::Status> {
+        info!(
+            task_id = %task_id,
+            event = "fl_model_get",
+            status = "getting",
+            "Getting aggregated model"
+        );
+
+        let request = GetModelRequest {
+            task_id: task_id.to_string(),
+        };
+
+        let response = self.client.get_aggregated_model(request).await?.into_inner();
+
+        info!(
+            task_id = %task_id,
+            size_bytes = %response.model_data.len(),
+            event = "fl_model_retrieved",
+            status = "success",
+            "Aggregated model retrieved"
         );
 
         Ok(response)

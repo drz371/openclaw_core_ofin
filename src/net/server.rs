@@ -11,6 +11,14 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use tonic::{transport::Server, Request, Response, Status};
 
+#[derive(Clone, Debug)]
+struct DeltaInfo {
+    agent_id: String,
+    data: Vec<u8>,
+    format: String,
+    timestamp: u64,
+}
+
 pub struct AgentRegistry {
     agents: Arc<RwLock<HashMap<String, AgentInfo>>>,
 }
@@ -196,6 +204,8 @@ pub struct FlCoordinatorImpl {
     registry: Arc<AgentRegistry>,
     compliance: Arc<ComplianceChecker>,
     tasks: Arc<RwLock<HashMap<String, FlTaskInfo>>>,
+    deltas: Arc<RwLock<HashMap<String, Vec<DeltaInfo>>>>,
+    aggregated_models: Arc<RwLock<HashMap<String, Vec<u8>>>>,
 }
 
 impl FlCoordinatorImpl {
@@ -204,6 +214,8 @@ impl FlCoordinatorImpl {
             registry,
             compliance,
             tasks: Arc::new(RwLock::new(HashMap::new())),
+            deltas: Arc::new(RwLock::new(HashMap::new())),
+            aggregated_models: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
@@ -211,6 +223,62 @@ impl FlCoordinatorImpl {
         let mut tasks = self.tasks.write().await;
         tasks.insert(task.task_id.clone(), task);
     }
+
+    async fn store_delta(&self, task_id: &str, delta: DeltaInfo) {
+        let mut deltas = self.deltas.write().await;
+        deltas.entry(task_id.to_string())
+            .or_insert_with(Vec::new)
+            .push(delta);
+    }
+
+    async fn aggregate_deltas(&self, task_id: &str) -> Result<Vec<u8>, String> {
+        let deltas = self.deltas.read().await;
+        let task_deltas = deltas.get(task_id)
+            .ok_or_else(|| format!("No deltas found for task {}", task_id))?;
+
+        if task_deltas.is_empty() {
+            return Err(format!("No deltas available for task {}", task_id));
+        }
+
+        let aggregated = federated_averaging(task_deltas);
+
+        let mut models = self.aggregated_models.write().await;
+        models.insert(task_id.to_string(), aggregated.clone());
+
+        Ok(aggregated)
+    }
+
+    async fn get_aggregated_model(&self, task_id: &str) -> Option<Vec<u8>> {
+        let models = self.aggregated_models.read().await;
+        models.get(task_id).cloned()
+    }
+}
+
+fn federated_averaging(deltas: &[DeltaInfo]) -> Vec<u8> {
+    if deltas.is_empty() {
+        return Vec::new();
+    }
+
+    if deltas.len() == 1 {
+        return deltas[0].data.clone();
+    }
+
+    let total_len = deltas[0].data.len();
+    let n = deltas.len();
+
+    let mut sum: Vec<i64> = vec![0; total_len];
+
+    for delta in deltas {
+        for (i, &byte) in delta.data.iter().enumerate().take(total_len) {
+            sum[i] += byte as i64;
+        }
+    }
+
+    let weight = 1.0 / n as f64;
+    sum.iter()
+        .map(|&x| ((x as f64) * weight).round() as i8)
+        .map(|x| x.max(i8::MIN).min(i8::MAX) as u8)
+        .collect()
 }
 
 #[tonic::async_trait]
@@ -234,6 +302,18 @@ impl FlCoordinator for FlCoordinatorImpl {
         self.compliance.check_fl_task(&req.agent_id, &req.task_id)?;
 
         let delta_id = format!("{}-{}", req.task_id, uuid::Uuid::new_v4());
+
+        let delta_info = DeltaInfo {
+            agent_id: req.agent_id.clone(),
+            data: req.delta_data.clone(),
+            format: req.format.clone(),
+            timestamp: std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
+        };
+
+        self.store_delta(&req.task_id, delta_info).await;
 
         tracing::info!(
             agent_id = %req.agent_id,
@@ -259,6 +339,80 @@ impl FlCoordinator for FlCoordinatorImpl {
         let task_list: Vec<FlTaskInfo> = tasks.values().cloned().collect();
 
         Ok(Response::new(FlTaskListResponse { tasks: task_list }))
+    }
+
+    async fn trigger_aggregation(
+        &self,
+        request: Request<crate::proto::clawfed::AggregationRequest>,
+    ) -> Result<Response<crate::proto::clawfed::AggregationResponse>, Status> {
+        let req = request.into_inner();
+
+        tracing::info!(
+            task_id = %req.task_id,
+            event = "fl_aggregation_triggered",
+            status = "starting",
+            "Triggering federated aggregation"
+        );
+
+        match self.aggregate_deltas(&req.task_id).await {
+            Ok(_) => {
+                let deltas = self.deltas.read().await;
+                let count = deltas.get(&req.task_id).map(|d| d.len()).unwrap_or(0) as i32;
+
+                tracing::info!(
+                    task_id = %req.task_id,
+                    delta_count = %count,
+                    event = "fl_aggregation_complete",
+                    status = "success",
+                    "Federated aggregation completed"
+                );
+
+                Ok(Response::new(crate::proto::clawfed::AggregationResponse {
+                    success: true,
+                    message: format!("Aggregation completed with {} deltas", count),
+                    task_id: req.task_id,
+                    delta_count: count,
+                }))
+            }
+            Err(e) => {
+                tracing::error!(
+                    task_id = %req.task_id,
+                    error = %e,
+                    event = "fl_aggregation_failed",
+                    status = "error",
+                    "Federated aggregation failed"
+                );
+                Err(Status::internal(e))
+            }
+        }
+    }
+
+    async fn get_aggregated_model(
+        &self,
+        request: Request<crate::proto::clawfed::GetModelRequest>,
+    ) -> Result<Response<crate::proto::clawfed::GetModelResponse>, Status> {
+        let req = request.into_inner();
+
+        match self.get_aggregated_model(&req.task_id).await {
+            Some(data) => {
+                tracing::info!(
+                    task_id = %req.task_id,
+                    size_bytes = %data.len(),
+                    event = "fl_model_retrieved",
+                    status = "success",
+                    "Aggregated model retrieved"
+                );
+                Ok(Response::new(crate::proto::clawfed::GetModelResponse {
+                    success: true,
+                    model_data: data,
+                    task_id: req.task_id,
+                }))
+            }
+            None => Err(Status::not_found(format!(
+                "Aggregated model not found for task {}",
+                req.task_id
+            ))),
+        }
     }
 }
 

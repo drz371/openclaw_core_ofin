@@ -69,6 +69,27 @@ message FlTaskListResponse {
   repeated FlTaskInfo tasks = 1;
 }
 
+message AggregationRequest {
+  string task_id = 1;
+}
+
+message AggregationResponse {
+  bool success = 1;
+  string message = 2;
+  string task_id = 3;
+  int32 delta_count = 4;
+}
+
+message GetModelRequest {
+  string task_id = 1;
+}
+
+message GetModelResponse {
+  bool success = 1;
+  bytes model_data = 2;
+  string task_id = 3;
+}
+
 service AgentService {
   rpc CallSkill(SkillRequest) returns (SkillResponse);
   rpc RegisterAgent(RegisterRequest) returns (RegisterResponse);
@@ -78,4 +99,6 @@ service AgentService {
 service FlCoordinator {
   rpc UploadDelta(FlDeltaUpload) returns (FlUploadResponse);
   rpc ListTasks(DiscoverRequest) returns (FlTaskListResponse);
+  rpc TriggerAggregation(AggregationRequest) returns (AggregationResponse);
+  rpc GetAggregatedModel(GetModelRequest) returns (GetModelResponse);
 }

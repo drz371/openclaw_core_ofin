@@ -10,5 +10,6 @@ country = "CN"
 
 [features]
 enable_skills = true
-enable_fl = false
+enable_fl = true
 fl_max_upload_mb = 10
+fl_aggregation = "fedavg"

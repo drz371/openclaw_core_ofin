@@ -1,6 +1,6 @@
 use anyhow::Result;
 use clap::Subcommand;
-use tracing::{error, info};
+use tracing::{error, info, warn};
 
 #[derive(Subcommand, Debug)]
 pub enum FlCommands {
@@ -15,12 +15,37 @@ pub enum FlCommands {
         #[arg(long, default_value = "http://[::1]:50051", help = "Coordinator address")]
         coordinator: String,
     },
+    #[command(name = "aggregate")]
+    Aggregate {
+        #[arg(long, help = "Task identifier to aggregate")]
+        task: String,
+
+        #[arg(long, default_value = "http://[::1]:50051", help = "Coordinator address")]
+        coordinator: String,
+    },
+    #[command(name = "get-model")]
+    GetModel {
+        #[arg(long, help = "Task identifier to get model")]
+        task: String,
+
+        #[arg(long, default_value = "http://[::1]:50051", help = "Coordinator address")]
+        coordinator: String,
+
+        #[arg(long, help = "Output file path")]
+        output: Option<String>,
+    },
 }
 
 pub async fn handle_fl_commands(agent_id: String, commands: FlCommands) -> Result<()> {
     match commands {
         FlCommands::UploadDelta { task, file, coordinator } => {
             handle_upload_delta(agent_id, task, file, coordinator).await
+        }
+        FlCommands::Aggregate { task, coordinator } => {
+            handle_aggregate(task, coordinator).await
+        }
+        FlCommands::GetModel { task, coordinator, output } => {
+            handle_get_model(task, coordinator, output).await
         }
     }
 }
@@ -71,6 +96,75 @@ async fn handle_upload_delta(agent_id: String, task_id: String, file_path: Strin
                 "Failed to upload delta"
             );
             Err(e)
+        }
+    }
+}
+
+async fn handle_aggregate(task_id: String, coordinator_addr: String) -> Result<()> {
+    info!(
+        task_id = %task_id,
+        coordinator = %coordinator_addr,
+        event = "fl_aggregate_command",
+        status = "started",
+        "Processing aggregate command"
+    );
+
+    let mut client = crate::net::FlCoordinatorClientWrapper::connect(coordinator_addr).await
+        .map_err(|e| anyhow::anyhow!("Failed to connect to coordinator: {}", e))?;
+
+    match client.trigger_aggregation(&task_id).await {
+        Ok(response) => {
+            println!("✓ Aggregation completed for task: {}", task_id);
+            println!("  Deltas aggregated: {}", response.delta_count);
+            println!("  Message: {}", response.message);
+            Ok(())
+        }
+        Err(e) => {
+            error!(
+                task_id = %task_id,
+                error = %e,
+                event = "fl_aggregate_failed",
+                status = "error",
+                "Failed to trigger aggregation"
+            );
+            Err(anyhow::anyhow!("Aggregation failed: {}", e))
+        }
+    }
+}
+
+async fn handle_get_model(task_id: String, coordinator_addr: String, output_path: Option<String>) -> Result<()> {
+    info!(
+        task_id = %task_id,
+        coordinator = %coordinator_addr,
+        output = ?output_path,
+        event = "fl_get_model_command",
+        status = "started",
+        "Processing get-model command"
+    );
+
+    let mut client = crate::net::FlCoordinatorClientWrapper::connect(coordinator_addr).await
+        .map_err(|e| anyhow::anyhow!("Failed to connect to coordinator: {}", e))?;
+
+    match client.get_aggregated_model(&task_id).await {
+        Ok(response) => {
+            println!("✓ Model retrieved for task: {}", task_id);
+            println!("  Model size: {} bytes", response.model_data.len());
+
+            if let Some(output) = output_path {
+                std::fs::write(&output, &response.model_data)?;
+                println!("  Saved to: {}", output);
+            }
+            Ok(())
+        }
+        Err(e) => {
+            error!(
+                task_id = %task_id,
+                error = %e,
+                event = "fl_get_model_failed",
+                status = "error",
+                "Failed to get model"
+            );
+            Err(anyhow::anyhow!("Get model failed: {}", e))
         }
     }
 }
