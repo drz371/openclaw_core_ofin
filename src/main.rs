@@ -2,6 +2,7 @@ mod agent;
 mod cli;
 mod fl;
 mod net;
+mod orchestrator;
 mod proto;
 mod skill;
 

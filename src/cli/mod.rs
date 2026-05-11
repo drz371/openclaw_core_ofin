@@ -318,7 +318,7 @@ impl Cli {
     }
 
     async fn handle_orchestrate(&self, goal: &str, coordinator: &str) -> Result<()> {
-        use crate::orchestrator::AutonomousOrchestrator;
+        use crate::orchestrator::{AutonomousOrchestrator, GoalPlanner, TaskStatus};
 
         info!(
             goal = %goal,
@@ -338,7 +338,7 @@ impl Cli {
         let orchestrator = AutonomousOrchestrator::new(coordinator);
 
         println!("→ 正在进行目标分解...");
-        let plan = crate::orchestrator::GoalPlanner::decompose(goal);
+        let plan = GoalPlanner::decompose(goal);
         println!("  ✓ 已分解为 {} 个子任务:", plan.sub_tasks.len());
 
         for (i, task) in plan.sub_tasks.iter().enumerate() {
@@ -377,14 +377,14 @@ impl Cli {
         println!("📋 子任务详情:");
         for task in &result.plan.sub_tasks {
             let status = match task.status {
-                crate::orchestrator::TaskStatus::Completed => "✓ 完成",
-                crate::orchestrator::TaskStatus::Failed => "✗ 失败",
-                crate::orchestrator::TaskStatus::InProgress => "⚙ 进行中",
-                crate::orchestrator::TaskStatus::Pending => "○ 等待",
-                crate::orchestrator::TaskStatus::Retrying => "↻ 重试",
+                TaskStatus::Completed => "✓ 完成",
+                TaskStatus::Failed => "✗ 失败",
+                TaskStatus::InProgress => "⚙ 进行中",
+                TaskStatus::Pending => "○ 等待",
+                TaskStatus::Retrying => "↻ 重试",
             };
             let result_preview = task.result.as_ref()
-                .map(|r| format!(" ({}...)", &r.chars().take(50).collect::<String>()))
+                .map(|r: &String| format!(" ({}...)", &r.chars().take(50).collect::<String>()))
                 .unwrap_or_default();
 
             println!("   {} {} {}", status, task.id, result_preview);

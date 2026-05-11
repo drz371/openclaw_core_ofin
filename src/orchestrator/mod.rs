@@ -7,7 +7,6 @@
 //! 4. 联邦学习 - 自动聚合知识 Delta
 
 use crate::net::{AgentClient, AgentRegistry};
-use crate::agent::AgentInfo;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tracing::{info, warn, error};
@@ -300,23 +299,24 @@ impl PlanExecutor {
             .map_err(|e| format!("Failed to connect: {}", e))?;
 
         let result = client
-            .call_skill(skill, &args)
+            .call_skill(skill, &args, "")
             .await
             .map_err(|e| format!("Skill call failed: {}", e))?;
 
+        let result_str = &result.result_json;
         info!(
             task_id = %task.id,
-            result_preview = %result.chars().take(100).collect::<String>(),
+            result_preview = %result_str.chars().take(100).collect::<String>(),
             event = "task_execution_complete",
             "Task execution completed"
         );
 
-        Ok(result)
+        Ok(result_str.clone())
     }
 
     /// 发现 Agent 地址
     async fn discover_agent(&self, agent_id: &str) -> Result<String, String> {
-        let mut client = AgentClient::connect(&self.coordinator_addr)
+        let mut client = AgentClient::connect(self.coordinator_addr.clone())
             .await
             .map_err(|e| format!("Failed to connect to coordinator: {}", e))?;
 
@@ -444,7 +444,7 @@ impl AutonomousOrchestrator {
         );
 
         // 1. 目标分解
-        let mut plan = self.planner.decompose(goal);
+        let mut plan = GoalPlanner::decompose(goal);
         info!(
             task_count = plan.sub_tasks.len(),
             event = "goal_decomposed",
@@ -482,13 +482,14 @@ impl AutonomousOrchestrator {
             }
         }
 
+        let total_tasks = plan.sub_tasks.len();
         let success = plan.is_complete() && !plan.has_failures();
 
         info!(
             success = %success,
             completed = completed,
             failed = failed,
-            total = plan.sub_tasks.len(),
+            total = total_tasks,
             event = "orchestration_complete",
             "Orchestration completed"
         );
@@ -497,7 +498,7 @@ impl AutonomousOrchestrator {
             success,
             plan,
             federated_delta: if federated_delta.is_empty() { None } else { Some(federated_delta) },
-            total_tasks: plan.sub_tasks.len(),
+            total_tasks,
             completed_tasks: completed,
             failed_tasks: failed,
         }
