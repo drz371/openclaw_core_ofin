@@ -293,13 +293,13 @@ impl PlanExecutor {
         let args = serde_json::to_string(&task.args)
             .unwrap_or_else(|_| "{}".to_string());
 
-        // 3. 调用 Agent 技能
+        // 3. 调用 Agent 技能 (地址已经是完整URL格式)
         let mut client = AgentClient::connect(agent_addr)
             .await
             .map_err(|e| format!("Failed to connect: {}", e))?;
 
         let result = client
-            .call_skill(skill, &args, "")
+            .call_skill(agent_id, skill, &args)
             .await
             .map_err(|e| format!("Skill call failed: {}", e))?;
 
@@ -316,7 +316,13 @@ impl PlanExecutor {
 
     /// 发现 Agent 地址
     async fn discover_agent(&self, agent_id: &str) -> Result<String, String> {
-        let mut client = AgentClient::connect(self.coordinator_addr.clone())
+        let coordinator_url = if self.coordinator_addr.starts_with("http") {
+            self.coordinator_addr.clone()
+        } else {
+            format!("http://{}", self.coordinator_addr)
+        };
+
+        let mut client = AgentClient::connect(coordinator_url)
             .await
             .map_err(|e| format!("Failed to connect to coordinator: {}", e))?;
 
@@ -327,6 +333,16 @@ impl PlanExecutor {
 
         let agent = response.agent
             .ok_or_else(|| format!("Agent {} not found", agent_id))?;
+
+        tracing::info!(
+            agent_id = %agent_id,
+            returned_agent_id = %agent.agent_id,
+            returned_address = %agent.address,
+            returned_port = agent.port,
+            returned_skills = ?agent.skills,
+            event = "agent_info_retrieved",
+            "Retrieved agent info from coordinator"
+        );
 
         let addr = if agent.address.contains(':') {
             format!("http://[{}]:{}", agent.address, agent.port)

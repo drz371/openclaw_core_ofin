@@ -43,6 +43,9 @@ pub enum Commands {
 
         #[arg(long, default_value = "agent_01", help = "Agent ID (agent_01=OpenClaw, agent_02=Hermes)")]
         agent_id: String,
+
+        #[arg(long, default_value = "[::1]:50051", help = "Coordinator address for registration")]
+        coordinator: String,
     },
 
     #[command(name = "call")]
@@ -108,8 +111,8 @@ impl Cli {
             Commands::Server { ref addr, ref agent_id } => {
                 self.handle_server(addr, agent_id).await
             }
-            Commands::Agent { ref config, server, ref addr, ref agent_id } => {
-                self.handle_agent(config.clone(), server, addr.clone(), agent_id.clone()).await
+            Commands::Agent { ref config, server, ref addr, ref agent_id, ref coordinator } => {
+                self.handle_agent(config.clone(), server, addr.clone(), agent_id.clone(), coordinator.clone()).await
             }
             Commands::Call { ref target, ref skill, ref args, ref addr } => {
                 self.handle_call(target.clone(), skill.clone(), args.clone(), addr.clone()).await
@@ -151,7 +154,7 @@ impl Cli {
         Ok(())
     }
 
-    async fn handle_agent(&self, config: Option<String>, server: bool, addr: String, agent_id: String) -> Result<()> {
+    async fn handle_agent(&self, config: Option<String>, server: bool, addr: String, agent_id: String, coordinator: String) -> Result<()> {
         use crate::agent::{Agent, AgentManager};
         use crate::net::{AgentRegistry, ComplianceChecker, start_server};
         use std::sync::Arc;
@@ -227,7 +230,8 @@ impl Cli {
 
             let agent_manager = crate::agent::AgentManager::new(local_agent, AgentRegistry::new(), compliance);
 
-            match agent_manager.register_with_coordinator(&std::env::var("COORDINATOR_ADDR").unwrap_or_else(|_| "http://[::1]:50051".to_string())).await {
+            let coordinator_addr = coordinator.clone();
+            match agent_manager.register_with_coordinator(&coordinator_addr).await {
                 Ok(_) => println!("  → Registered with coordinator"),
                 Err(e) => println!("  ⚠ Failed to register with coordinator: {}", e),
             }

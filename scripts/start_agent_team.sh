@@ -15,8 +15,9 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-# 项目路径
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# 项目路径 (返回上级目录)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 cd "$PROJECT_ROOT"
 
 # 默认配置
@@ -167,8 +168,8 @@ start_agent_01() {
     nohup cargo run --bin clawfed -- agent \
         --agent-id agent_01 \
         --addr "$DEFAULT_AGENT_01" \
-        --coordinator "$DEFAULT_COORDINATOR" \
-        --config "" \
+        --server \
+        --coordinator "http://$DEFAULT_COORDINATOR" \
         > /tmp/clawfed_agent01.log 2>&1 &
 
     AGENT1_PID=$!
@@ -200,8 +201,8 @@ start_agent_02() {
     nohup cargo run --bin clawfed -- agent \
         --agent-id agent_02 \
         --addr "$DEFAULT_AGENT_02" \
-        --coordinator "$DEFAULT_COORDINATOR" \
-        --config "" \
+        --server \
+        --coordinator "http://$DEFAULT_COORDINATOR" \
         > /tmp/clawfed_agent02.log 2>&1 &
 
     AGENT2_PID=$!
