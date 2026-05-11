@@ -319,6 +319,31 @@ impl Cli {
 
     async fn handle_orchestrate(&self, goal: &str, coordinator: &str) -> Result<()> {
         use crate::orchestrator::{AutonomousOrchestrator, GoalPlanner, TaskStatus};
+        use std::fs;
+
+        println!("╔══════════════════════════════════════════════════════════════╗");
+        println!("║           🎯 自主任务编排器启动 🎯                         ║");
+        println!("╚══════════════════════════════════════════════════════════════╝");
+        println!();
+
+        let report_path = std::path::Path::new("reports");
+        if report_path.exists() {
+            println!("📂 已加载项目报告:");
+            if let Ok(entries) = fs::read_dir(report_path) {
+                for entry in entries.flatten() {
+                    if let Some(ext) = entry.path().extension() {
+                        if ext == "md" {
+                            println!("   📄 {}", entry.file_name().to_string_lossy());
+                        }
+                    }
+                }
+            }
+            println!();
+        }
+
+        println!("目标: {}", goal);
+        println!("协调器: {}", coordinator);
+        println!();
 
         info!(
             goal = %goal,
@@ -326,14 +351,6 @@ impl Cli {
             event = "orchestration_start",
             "Starting autonomous orchestration"
         );
-
-        println!("╔══════════════════════════════════════════════════════════════╗");
-        println!("║           🎯 自主任务编排器启动 🎯                         ║");
-        println!("╚══════════════════════════════════════════════════════════════╝");
-        println!();
-        println!("目标: {}", goal);
-        println!("协调器: {}", coordinator);
-        println!();
 
         let orchestrator = AutonomousOrchestrator::new(coordinator);
 
