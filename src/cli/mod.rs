@@ -65,6 +65,15 @@ pub enum Commands {
         #[command(subcommand)]
         commands: fl::FlCommands,
     },
+
+    #[command(name = "orchestrate")]
+    Orchestrate {
+        #[arg(help = "The goal to achieve (e.g., '分析全球AI发展趋势并生成报告')")]
+        goal: String,
+
+        #[arg(long, default_value = "[::1]:50051", help = "Coordinator address")]
+        coordinator: String,
+    },
 }
 
 impl Cli {
@@ -108,6 +117,9 @@ impl Cli {
             Commands::Fl { commands } => {
                 let agent_id = "default_agent".to_string();
                 fl::handle_fl_commands(agent_id, commands).await
+            }
+            Commands::Orchestrate { ref goal, ref coordinator } => {
+                self.handle_orchestrate(goal, coordinator).await
             }
         }
     }
@@ -300,6 +312,88 @@ impl Cli {
             println!("  Result: {}", response.result_json);
         } else {
             println!("✗ Skill call failed: {}", response.error_message);
+        }
+
+        Ok(())
+    }
+
+    async fn handle_orchestrate(&self, goal: &str, coordinator: &str) -> Result<()> {
+        use crate::orchestrator::AutonomousOrchestrator;
+
+        info!(
+            goal = %goal,
+            coordinator = %coordinator,
+            event = "orchestration_start",
+            "Starting autonomous orchestration"
+        );
+
+        println!("╔══════════════════════════════════════════════════════════════╗");
+        println!("║           🎯 自主任务编排器启动 🎯                         ║");
+        println!("╚══════════════════════════════════════════════════════════════╝");
+        println!();
+        println!("目标: {}", goal);
+        println!("协调器: {}", coordinator);
+        println!();
+
+        let orchestrator = AutonomousOrchestrator::new(coordinator);
+
+        println!("→ 正在进行目标分解...");
+        let plan = crate::orchestrator::GoalPlanner::decompose(goal);
+        println!("  ✓ 已分解为 {} 个子任务:", plan.sub_tasks.len());
+
+        for (i, task) in plan.sub_tasks.iter().enumerate() {
+            println!("    [{}/{}] {} -> Agent:{:?}, Skill:{:?}",
+                i + 1,
+                plan.sub_tasks.len(),
+                task.description,
+                task.target_agent,
+                task.skill
+            );
+        }
+        println!();
+
+        println!("→ 正在执行自主任务流...");
+        let result = orchestrator.execute(goal).await;
+
+        println!();
+        println!("╔══════════════════════════════════════════════════════════════╗");
+        println!("║                    执行结果汇总                            ║");
+        println!("╚══════════════════════════════════════════════════════════════╝");
+        println!();
+
+        if result.success {
+            println!("✓ 任务编排执行成功!");
+        } else {
+            println!("✗ 任务编排执行完成，但存在失败");
+        }
+
+        println!();
+        println!("📊 执行统计:");
+        println!("   - 总任务数: {}", result.total_tasks);
+        println!("   - 已完成: {} ✓", result.completed_tasks);
+        println!("   - 失败: {} ✗", result.failed_tasks);
+        println!();
+
+        println!("📋 子任务详情:");
+        for task in &result.plan.sub_tasks {
+            let status = match task.status {
+                crate::orchestrator::TaskStatus::Completed => "✓ 完成",
+                crate::orchestrator::TaskStatus::Failed => "✗ 失败",
+                crate::orchestrator::TaskStatus::InProgress => "⚙ 进行中",
+                crate::orchestrator::TaskStatus::Pending => "○ 等待",
+                crate::orchestrator::TaskStatus::Retrying => "↻ 重试",
+            };
+            let result_preview = task.result.as_ref()
+                .map(|r| format!(" ({}...)", &r.chars().take(50).collect::<String>()))
+                .unwrap_or_default();
+
+            println!("   {} {} {}", status, task.id, result_preview);
+        }
+
+        if result.federated_delta.is_some() {
+            println!();
+            println!("🔄 联邦学习 Delta 已生成，共 {} 字节",
+                result.federated_delta.as_ref().unwrap().len());
         }
 
         Ok(())
