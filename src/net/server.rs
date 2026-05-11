@@ -252,27 +252,16 @@ fn process_skill_call(skill_name: &str, args_json: &str) -> String {
             .to_string()
         }
         "analyze_context" => {
-            serde_json::json!({
-                "status": "analyzed",
-                "context": "Analysis completed",
-                "insights": ["Insight 1", "Insight 2"]
-            })
-            .to_string()
+            crate::llm_integration::call_llm_sync(skill_name, args_json)
         }
         "generate_response" => {
-            serde_json::json!({
-                "status": "generated",
-                "response": "Generated response based on context"
-            })
-            .to_string()
+            crate::llm_integration::call_llm_sync(skill_name, args_json)
         }
         "translate_text" => {
-            serde_json::json!({
-                "status": "translated",
-                "original_length": 100,
-                "translated": true
-            })
-            .to_string()
+            crate::llm_integration::call_llm_sync(skill_name, args_json)
+        }
+        "summarize_pdf" => {
+            crate::llm_integration::call_llm_sync(skill_name, args_json)
         }
         _ => serde_json::json!({"status": "processed", "skill": skill_name, "args": args_json}).to_string(),
     }

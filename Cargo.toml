@@ -13,6 +13,7 @@ fl = []
 
 [dependencies]
 tokio = { version = "1.35", features = ["full"] }
+reqwest = { version = "0.11", features = ["json"] }
 tonic = "0.11"
 prost = "0.12"
 serde = { version = "1.0", features = ["derive"] }
@@ -30,6 +31,7 @@ uuid = { version = "1.6", features = ["v4", "serde"] }
 
 [dev-dependencies]
 tempfile = "3.8"
+axum = "0.7"
 
 [build-dependencies]
 tonic-build = "0.11"
