@@ -62,7 +62,7 @@ impl LlmService {
     }
 }
 
-pub fn call_llm_sync(skill_name: &str, args_json: &str) -> String {
+pub async fn call_llm(skill_name: &str, args_json: &str) -> String {
     let llm_url = std::env::var("LLM_URL").unwrap_or_else(|_| "http://127.0.0.1:8080".to_string());
 
     let prompt = match skill_name {
@@ -83,11 +83,8 @@ pub fn call_llm_sync(skill_name: &str, args_json: &str) -> String {
         }
     };
 
-    let rt = tokio::runtime::Runtime::new().unwrap();
-    match rt.block_on(async {
-        let llm = LlmService::new(&llm_url);
-        llm.chat(&prompt).await
-    }) {
+    let llm = LlmService::new(&llm_url);
+    match llm.chat(&prompt).await {
         Ok(response) => {
             serde_json::json!({
                 "status": "success",

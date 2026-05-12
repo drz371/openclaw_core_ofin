@@ -107,7 +107,7 @@ impl AgentService for AgentServiceImpl {
             )));
         }
 
-        let result = process_skill_call(&req.skill_name, &req.args_json);
+        let result = process_skill_call(&req.skill_name, &req.args_json).await;
 
         tracing::info!(
             agent_id = %req.agent_id,
@@ -223,7 +223,7 @@ impl AgentService for AgentServiceImpl {
     }
 }
 
-fn process_skill_call(skill_name: &str, args_json: &str) -> String {
+async fn process_skill_call(skill_name: &str, args_json: &str) -> String {
     match skill_name {
         "detect_objects" => {
             serde_json::json!({
@@ -252,16 +252,13 @@ fn process_skill_call(skill_name: &str, args_json: &str) -> String {
             .to_string()
         }
         "analyze_context" => {
-            crate::llm_integration::call_llm_sync(skill_name, args_json)
+            crate::llm_integration::call_llm(skill_name, args_json).await
         }
         "generate_response" => {
-            crate::llm_integration::call_llm_sync(skill_name, args_json)
+            crate::llm_integration::call_llm(skill_name, args_json).await
         }
         "translate_text" => {
-            crate::llm_integration::call_llm_sync(skill_name, args_json)
-        }
-        "summarize_pdf" => {
-            crate::llm_integration::call_llm_sync(skill_name, args_json)
+            crate::llm_integration::call_llm(skill_name, args_json).await
         }
         _ => serde_json::json!({"status": "processed", "skill": skill_name, "args": args_json}).to_string(),
     }

@@ -1,6 +1,7 @@
 mod agent;
 mod cli;
 mod fl;
+mod llm_integration;
 mod net;
 mod orchestrator;
 mod proto;

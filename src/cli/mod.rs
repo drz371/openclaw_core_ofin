@@ -201,10 +201,15 @@ impl Cli {
         };
 
         let skills = match agent_id.as_str() {
-            "agent_02" => vec![
+            "agent_02" | "hermes" => vec![
                 "analyze_context".to_string(),
                 "generate_response".to_string(),
                 "translate_text".to_string(),
+                "summarize_pdf".to_string(),
+            ],
+            "agent_01" | "openclaw" => vec![
+                "detect_objects".to_string(),
+                "process_data".to_string(),
             ],
             _ => vec![
                 "detect_objects".to_string(),

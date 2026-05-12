@@ -166,7 +166,7 @@ start_agent_01() {
     fi
 
     nohup cargo run --bin clawfed -- agent \
-        --agent-id agent_01 \
+        --agent-id openclaw \
         --addr "$DEFAULT_AGENT_01" \
         --server \
         --coordinator "http://$DEFAULT_COORDINATOR" \
@@ -199,7 +199,7 @@ start_agent_02() {
     fi
 
     nohup cargo run --bin clawfed -- agent \
-        --agent-id agent_02 \
+        --agent-id hermes \
         --addr "$DEFAULT_AGENT_02" \
         --server \
         --coordinator "http://$DEFAULT_COORDINATOR" \
