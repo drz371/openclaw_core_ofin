@@ -6,3 +6,4 @@ pub mod net;
 pub mod orchestrator;
 pub mod proto;
 pub mod skill;
+pub mod uav_planning;

@@ -6,6 +6,7 @@ mod net;
 mod orchestrator;
 mod proto;
 mod skill;
+mod uav_planning;
 
 use clap::Parser;
 use cli::Cli;
