@@ -260,8 +260,92 @@ async fn process_skill_call(skill_name: &str, args_json: &str) -> String {
         "translate_text" => {
             crate::llm_integration::call_llm(skill_name, args_json).await
         }
+        "auto_patrol" => {
+            let request: Result<AutoPatrolRequest, _> = serde_json::from_str(args_json);
+            match request {
+                Ok(req) => {
+                    let path = crate::uav_planning::generate_auto_patrol_path(
+                        &crate::uav_planning::UavPosition {
+                            lat: req.start_lat,
+                            lon: req.start_lon,
+                            alt: req.start_alt,
+                        },
+                        &crate::uav_planning::InspectionZone {
+                            name: req.zone_name.clone(),
+                            center_lat: req.zone_center_lat,
+                            center_lon: req.zone_center_lon,
+                            width_meters: req.zone_width,
+                            height_meters: req.zone_height,
+                            altitude: req.flight_altitude,
+                            points: vec![],
+                        },
+                        req.overlap_percent,
+                    );
+                    serde_json::to_string(&path).unwrap_or_else(|_| r#"{"error":"serialization failed"}"#.to_string())
+                }
+                Err(_) => serde_json::json!({"status": "error", "message": "Invalid request format"}).to_string(),
+            }
+        }
+        "industrial_inspection" => {
+            let request: Result<InspectionRequest, _> = serde_json::from_str(args_json);
+            match request {
+                Ok(req) => {
+                    let plan = crate::uav_planning::plan_industrial_inspection(
+                        &req.uav_id,
+                        &req.facility_type,
+                        &crate::uav_planning::InspectionZone {
+                            name: req.zone_name.clone(),
+                            center_lat: req.zone_center_lat,
+                            center_lon: req.zone_center_lon,
+                            width_meters: req.zone_width,
+                            height_meters: req.zone_height,
+                            altitude: req.flight_altitude,
+                            points: vec![],
+                        },
+                    );
+                    serde_json::to_string(&plan).unwrap_or_else(|_| r#"{"error":"serialization failed"}"#.to_string())
+                }
+                Err(_) => serde_json::json!({"status": "error", "message": "Invalid request format"}).to_string(),
+            }
+        }
+        "analyze_telemetry" => {
+            let telemetry: Result<crate::uav_planning::UavTelemetry, _> = serde_json::from_str(args_json);
+            match telemetry {
+                Ok(t) => {
+                    let analysis = crate::uav_planning::analyze_telemetry(&t);
+                    serde_json::to_string(&analysis).unwrap_or_else(|_| r#"{"error":"serialization failed"}"#.to_string())
+                }
+                Err(_) => serde_json::json!({"status": "error", "message": "Invalid telemetry format"}).to_string(),
+            }
+        }
         _ => serde_json::json!({"status": "processed", "skill": skill_name, "args": args_json}).to_string(),
     }
+}
+
+#[derive(serde::Deserialize)]
+struct AutoPatrolRequest {
+    start_lat: f64,
+    start_lon: f64,
+    start_alt: f64,
+    zone_name: String,
+    zone_center_lat: f64,
+    zone_center_lon: f64,
+    zone_width: f64,
+    zone_height: f64,
+    flight_altitude: f64,
+    overlap_percent: f64,
+}
+
+#[derive(serde::Deserialize)]
+struct InspectionRequest {
+    uav_id: String,
+    zone_name: String,
+    zone_center_lat: f64,
+    zone_center_lon: f64,
+    zone_width: f64,
+    zone_height: f64,
+    flight_altitude: f64,
+    facility_type: String,
 }
 
 pub struct FlCoordinatorImpl {

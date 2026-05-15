@@ -211,6 +211,17 @@ impl Cli {
                 "detect_objects".to_string(),
                 "process_data".to_string(),
             ],
+            "uav_planner" => vec![
+                "auto_patrol".to_string(),
+                "industrial_inspection".to_string(),
+                "optimize_path".to_string(),
+                "analyze_telemetry".to_string(),
+            ],
+            "uav_monitor" => vec![
+                "analyze_telemetry".to_string(),
+                "detect_anomaly".to_string(),
+                "assess_battery".to_string(),
+            ],
             _ => vec![
                 "detect_objects".to_string(),
                 "summarize_pdf".to_string(),
